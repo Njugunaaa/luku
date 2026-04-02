@@ -35,7 +35,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 
   const values: InsertUser = { openId: user.openId };
   const updateSet: Record<string, unknown> = {};
-  const textFields = ["name", "email", "loginMethod"] as const;
+  const textFields = ["name", "email", "loginMethod", "passwordHash"] as const;
 
   for (const field of textFields) {
     const value = user[field];
@@ -59,6 +59,19 @@ export async function getUserByOpenId(openId: string) {
   if (!db) return undefined;
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
   return result[0];
+}
+
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  try {
+    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    return result[0];
+  } catch (err) {
+    console.error("[Database] getUserByEmail failed", { email }, err);
+    // re‑throw so caller can decide how to handle it
+    throw err;
+  }
 }
 
 export async function getUserById(id: number) {
@@ -107,12 +120,12 @@ export async function getProducts(opts: {
   const db = await getDb();
   if (!db) return [];
 
-  const conditions = [];
-  if (opts.categoryId) conditions.push(eq(products.categoryId, opts.categoryId));
-  if (opts.featured !== undefined) conditions.push(eq(products.featured, opts.featured));
-  if (opts.inStock !== undefined) conditions.push(eq(products.inStock, opts.inStock));
+  const productconditions = [];
+  if (opts.categoryId) productconditions.push(eq(products.categoryId, opts.categoryId));
+  if (opts.featured !== undefined) productconditions.push(eq(products.featured, opts.featured));
+  if (opts.inStock !== undefined) productconditions.push(eq(products.inStock, opts.inStock));
   if (opts.search) {
-    conditions.push(or(
+    productconditions.push(or(
       like(products.name, `%${opts.search}%`),
       like(products.description, `%${opts.search}%`),
       like(products.brand, `%${opts.search}%`)
@@ -120,7 +133,7 @@ export async function getProducts(opts: {
   }
 
   const query = db.select().from(products);
-  if (conditions.length > 0) query.where(and(...conditions));
+  if (productconditions.length > 0) query.where(and(...productconditions));
   query.orderBy(desc(products.createdAt));
   if (opts.limit) query.limit(opts.limit);
   if (opts.offset) query.offset(opts.offset);
@@ -278,10 +291,10 @@ export async function getOrdersByUserId(userId: number) {
 export async function getAllOrders(opts: { status?: string; limit?: number; offset?: number } = {}) {
   const db = await getDb();
   if (!db) return [];
-  const conditions = [];
-  if (opts.status) conditions.push(eq(orders.status, opts.status as any));
+  const productconditions = [];
+  if (opts.status) productconditions.push(eq(orders.status, opts.status as any));
   const query = db.select().from(orders);
-  if (conditions.length > 0) query.where(and(...conditions));
+  if (productconditions.length > 0) query.where(and(...productconditions));
   query.orderBy(desc(orders.createdAt));
   if (opts.limit) query.limit(opts.limit);
   if (opts.offset) query.offset(opts.offset);
@@ -312,3 +325,4 @@ export async function getOrderSummary(startDate: Date, endDate: Date) {
 
   return { totalOrders, totalRevenue, paidOrders, pendingOrders, deliveredOrders };
 }
+export { users, products, orders, orderItems, cartItems, categories };

@@ -14,7 +14,8 @@ export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
-  email: varchar("email", { length: 320 }),
+  email: varchar("email", { length: 320 }).unique(),
+  passwordHash: varchar("passwordHash", { length: 128 }),
   phone: varchar("phone", { length: 32 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
@@ -54,7 +55,7 @@ export const products = mysqlTable("products", {
   sizes: text("sizes"), // JSON array of available sizes
   colors: text("colors"), // JSON array of available colors
   brand: varchar("brand", { length: 128 }),
-  condition: mysqlEnum("condition", ["new", "like_new", "good", "fair"]).default("like_new"),
+  productcondition: mysqlEnum("productcondition", ["new", "like_new", "good", "fair"]).default("like_new"),
   inStock: boolean("inStock").default(true).notNull(),
   stockCount: int("stockCount").default(1),
   featured: boolean("featured").default(false),

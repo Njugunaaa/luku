@@ -14,7 +14,7 @@ type Product = {
   originalPrice?: string | null;
   imageUrl: string;
   brand?: string | null;
-  condition?: string | null;
+  productcondition?: string | null;
   inStock: boolean;
   featured?: boolean | null;
   isNew?: boolean | null;
@@ -118,9 +118,9 @@ export default function ProductCard({ product, className = "" }: Props) {
               </span>
             )}
           </div>
-          {product.condition && (
+          {product.productcondition && (
             <p className="text-xs text-muted-foreground mt-1 capitalize">
-              {product.condition.replace("_", " ")}
+              {product.productcondition.replace("_", " ")}
             </p>
           )}
         </div>

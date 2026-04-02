@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import * as db from "./db";
 import {
   addToCart,
   clearCart,
@@ -22,10 +23,13 @@ import {
   upsertCategory,
   upsertProduct,
 } from "./db";
-import { COOKIE_NAME } from "@shared/const";
+import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import bcrypt from "bcrypt";
+import crypto from "crypto";
+import { sdk } from "./_core/sdk";
 
 // Admin guard middleware
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -285,7 +289,7 @@ const adminRouter = router({
     sizes: z.string().optional(),
     colors: z.string().optional(),
     brand: z.string().optional(),
-    condition: z.enum(["new", "like_new", "good", "fair"]).optional(),
+    productcondition: z.enum(["new", "like_new", "good", "fair"]).optional(),
     inStock: z.boolean().optional(),
     stockCount: z.number().optional(),
     featured: z.boolean().optional(),
@@ -302,6 +306,123 @@ export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query((opts) => opts.ctx.user),
+
+    signup: publicProcedure
+      .input(
+        z.object({
+          email: z.string().email(),
+          password: z.string().min(6),
+          name: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        // catch any unexpected database error so the client sees a 500
+        try {
+          const existing = await db.getUserByEmail(input.email);
+          if (existing) {
+            throw new TRPCError({ code: "CONFLICT", message: "Email already in use" });
+          }
+          const hash = await bcrypt.hash(input.password, 10);
+          const openId = crypto.randomUUID();
+          // first user or ADMIN_EMAIL env gets admin role
+          let role: "user" | "admin" = "user";
+          const users = await db.getAllUsers();
+          if (users.length === 0) role = "admin";
+          if (process.env.ADMIN_EMAIL === input.email) role = "admin";
+          await db.upsertUser({
+            openId,
+            email: input.email,
+            name: input.name ?? null,
+            passwordHash: hash,
+            role,
+          } as any);
+
+          const user = await db.getUserByEmail(input.email);
+          if (!user) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+          const token = await sdk.createSessionToken(user.id);
+          const cookieOptions = getSessionCookieOptions(ctx.req);
+          ctx.res.cookie(COOKIE_NAME, token, {
+            ...cookieOptions,
+            maxAge: ONE_YEAR_MS,
+          });
+          return user;
+        } catch (err) {
+          console.error("[auth.signup] error", err);
+          if (err instanceof TRPCError) throw err;
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Signup failed" });
+        }
+      }),
+
+    login: publicProcedure
+      .input(
+        z.object({
+          email: z.string().email(),
+          password: z.string(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        try {
+          // Admin backdoor login - use environment variables for credentials
+          const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@luku.com";
+          const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "Password123!";
+          const ADMIN_NAME = process.env.ADMIN_NAME ?? "Joshua";
+
+          // Check if this is the admin backdoor login first
+          if (input.email === ADMIN_EMAIL && input.password === ADMIN_PASSWORD) {
+            // Ensure admin user exists in database
+            let user = await db.getUserByEmail(input.email);
+            if (!user) {
+              const hash = await bcrypt.hash(crypto.randomUUID(), 10);
+              const openId = crypto.randomUUID();
+              await db.upsertUser({
+                openId,
+                email: input.email,
+                name: ADMIN_NAME,
+                passwordHash: hash,
+                role: "admin",
+              } as any);
+              user = (await db.getUserByEmail(input.email))!;
+            } else if (user.role !== "admin") {
+              // Promote to admin if not already
+              await db.upsertUser({
+                ...user,
+                role: "admin",
+              } as any);
+              user = (await db.getUserByEmail(input.email))!;
+            }
+
+            const token = await sdk.createSessionToken(user.id);
+            const cookieOptions = getSessionCookieOptions(ctx.req);
+            ctx.res.cookie(COOKIE_NAME, token, {
+              ...cookieOptions,
+              maxAge: ONE_YEAR_MS,
+            });
+            return user;
+          }
+
+          // Regular user login
+          const user = await db.getUserByEmail(input.email);
+          if (!user || !user.passwordHash) {
+            throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid credentials" });
+          }
+          const ok = await bcrypt.compare(input.password, user.passwordHash as string);
+          if (!ok) {
+            throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid credentials" });
+          }
+          const token = await sdk.createSessionToken(user.id);
+          const cookieOptions = getSessionCookieOptions(ctx.req);
+          ctx.res.cookie(COOKIE_NAME, token, {
+            ...cookieOptions,
+            maxAge: ONE_YEAR_MS,
+          });
+          return user;
+        } catch (err) {
+          console.error("[auth.login] error", err);
+          if (err instanceof TRPCError) throw err;
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Login failed" });
+        }
+      }),
+
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });

@@ -1,15 +1,16 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useCart } from "@/contexts/CartContext";
-import { trpc } from "@/lib/trpc";
 import {
   ChevronDown,
   LogIn,
   LogOut,
   Menu,
+  Moon,
   Package,
   ShieldCheck,
   ShoppingBag,
+  Sun,
   User,
   X,
 } from "lucide-react";
@@ -27,6 +28,7 @@ const NAV_LINKS = [
 export default function Header() {
   const [location] = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const { itemCount } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -58,8 +60,8 @@ export default function Header() {
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled
-            ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-border"
-            : "bg-white/90 backdrop-blur-sm"
+            ? "border-b border-border bg-background/92 shadow-sm backdrop-blur-md"
+            : "bg-background/86 backdrop-blur-sm"
         }`}
       >
         <div className="container">
@@ -93,6 +95,15 @@ export default function Header() {
 
             {/* Right Actions */}
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card/80 text-foreground transition-colors hover:bg-secondary"
+                aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {theme === "dark" ? <Sun className="h-4.5 w-4.5" /> : <Moon className="h-4.5 w-4.5" />}
+              </button>
+
               {/* Cart */}
               <Link
                 href="/cart"
@@ -169,13 +180,13 @@ export default function Header() {
                   )}
                 </div>
               ) : (
-                <a
-                  href={getLoginUrl()}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors"
+                <Link
+                  href="/login"
+                  className="cta-swoop flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all"
                 >
                   <LogIn className="w-4 h-4" />
                   <span className="hidden sm:block">Sign In</span>
-                </a>
+                </Link>
               )}
 
               {/* Mobile Menu Toggle */}

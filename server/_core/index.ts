@@ -3,10 +3,12 @@ import express from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
+// authentication routes (signup/login) are declared in oauth.ts
 import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { users } from '../../drizzle/schema';
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -30,10 +32,26 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+
+  // sanity check: database connection and tables should be available
+  try {
+    const db = await import("../db");
+    const connection = await db.getDb();
+    if (!connection) {
+      throw new Error("database not available (check DATABASE_URL)");
+    }
+    // simple query - users table must exist
+    await connection.select().from(users).limit(1).execute();
+  } catch (err: any) {
+    console.error("[startup] database check failed:", err.message || err);
+    console.error("Did you run the migrations (pnpm db:push) and set DATABASE_URL?");
+    process.exit(1);
+  }
+
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
-  // OAuth callback under /api/oauth/callback
+  // REST auth endpoints (used by the React forms)
   registerOAuthRoutes(app);
   // tRPC API
   app.use(

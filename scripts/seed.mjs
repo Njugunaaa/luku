@@ -48,12 +48,12 @@ const PRODUCTS = [
   {
     slug: "vintage-levis-denim-jacket",
     name: "Vintage Levi's Denim Jacket",
-    description: "Classic Levi's trucker jacket in medium wash denim. Excellent vintage condition with authentic fading. A timeless wardrobe staple.",
+    description: "Classic Levi's trucker jacket in medium wash denim. Excellent vintage productcondition with authentic fading. A timeless wardrobe staple.",
     price: "2800", originalPrice: "4500",
     category: "mens-collection",
     imageUrl: "https://images.unsplash.com/photo-1576871337622-98d48d1cf531?w=600&q=80",
     sizes: '["S","M","L","XL"]', colors: '["Medium Wash","Dark Wash"]',
-    brand: "Levi's", condition: "like_new", featured: true, isNew: false,
+    brand: "Levi's", productcondition: "like_new", featured: true, isNew: false,
   },
   {
     slug: "ralph-lauren-polo-shirt",
@@ -63,7 +63,7 @@ const PRODUCTS = [
     category: "mens-collection",
     imageUrl: "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&q=80",
     sizes: '["S","M","L","XL","XXL"]', colors: '["Navy","White","Black"]',
-    brand: "Ralph Lauren", condition: "like_new", featured: true, isNew: true,
+    brand: "Ralph Lauren", productcondition: "like_new", featured: true, isNew: true,
   },
   {
     slug: "supreme-box-logo-hoodie",
@@ -73,7 +73,7 @@ const PRODUCTS = [
     category: "mens-collection",
     imageUrl: "https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=600&q=80",
     sizes: '["M","L","XL"]', colors: '["Black","Red","Grey"]',
-    brand: "Supreme", condition: "good", featured: true, isNew: false,
+    brand: "Supreme", productcondition: "good", featured: true, isNew: false,
   },
   {
     slug: "tommy-hilfiger-striped-tee",
@@ -83,7 +83,7 @@ const PRODUCTS = [
     category: "mens-collection",
     imageUrl: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80",
     sizes: '["S","M","L","XL"]', colors: '["Red/White/Blue","Navy/White"]',
-    brand: "Tommy Hilfiger", condition: "good", featured: false, isNew: true,
+    brand: "Tommy Hilfiger", productcondition: "good", featured: false, isNew: true,
   },
   {
     slug: "mens-slim-fit-chinos",
@@ -93,7 +93,7 @@ const PRODUCTS = [
     category: "mens-collection",
     imageUrl: "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=600&q=80",
     sizes: '["28","30","32","34","36"]', colors: '["Khaki","Navy","Olive"]',
-    brand: "Zara", condition: "like_new", featured: false, isNew: false,
+    brand: "Zara", productcondition: "like_new", featured: false, isNew: false,
   },
   {
     slug: "adidas-track-jacket",
@@ -103,7 +103,7 @@ const PRODUCTS = [
     category: "mens-collection",
     imageUrl: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600&q=80",
     sizes: '["S","M","L","XL"]', colors: '["Black/Gold","Navy/White"]',
-    brand: "Adidas", condition: "like_new", featured: true, isNew: false,
+    brand: "Adidas", productcondition: "like_new", featured: true, isNew: false,
   },
   {
     slug: "mens-cable-knit-sweater",
@@ -113,7 +113,7 @@ const PRODUCTS = [
     category: "mens-collection",
     imageUrl: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=600&q=80",
     sizes: '["S","M","L","XL"]', colors: '["Cream","Grey","Camel"]',
-    brand: "H&M", condition: "new", featured: false, isNew: true,
+    brand: "H&M", productcondition: "new", featured: false, isNew: true,
   },
   {
     slug: "mens-graphic-tee-pack",
@@ -123,7 +123,7 @@ const PRODUCTS = [
     category: "mens-collection",
     imageUrl: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=600&q=80",
     sizes: '["S","M","L","XL","XXL"]', colors: '["White","Black","Grey"]',
-    brand: null, condition: "good", featured: false, isNew: false,
+    brand: null, productcondition: "good", featured: false, isNew: false,
   },
 
   // ── Women's Collection ────────────────────────────────────────────────────
@@ -135,7 +135,7 @@ const PRODUCTS = [
     category: "womens-collection",
     imageUrl: "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=600&q=80",
     sizes: '["XS","S","M","L","XL"]', colors: '["Floral Blue","Floral Pink"]',
-    brand: "Zara", condition: "like_new", featured: true, isNew: true,
+    brand: "Zara", productcondition: "like_new", featured: true, isNew: true,
   },
   {
     slug: "womens-denim-mini-skirt",
@@ -145,7 +145,7 @@ const PRODUCTS = [
     category: "womens-collection",
     imageUrl: "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=600&q=80",
     sizes: '["XS","S","M","L"]', colors: '["Light Wash","Dark Wash"]',
-    brand: "H&M", condition: "good", featured: true, isNew: false,
+    brand: "H&M", productcondition: "good", featured: true, isNew: false,
   },
   {
     slug: "silk-slip-dress",
@@ -155,7 +155,7 @@ const PRODUCTS = [
     category: "womens-collection",
     imageUrl: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&q=80",
     sizes: '["XS","S","M","L"]', colors: '["Champagne","Black","Dusty Rose"]',
-    brand: "ASOS", condition: "like_new", featured: true, isNew: true,
+    brand: "ASOS", productcondition: "like_new", featured: true, isNew: true,
   },
   {
     slug: "oversized-blazer-women",
@@ -165,7 +165,7 @@ const PRODUCTS = [
     category: "womens-collection",
     imageUrl: "https://images.unsplash.com/photo-1548549557-dbe9155b3a97?w=600&q=80",
     sizes: '["XS","S","M","L","XL"]', colors: '["Camel","Black","Cream"]',
-    brand: "Zara", condition: "like_new", featured: false, isNew: false,
+    brand: "Zara", productcondition: "like_new", featured: false, isNew: false,
   },
   {
     slug: "womens-high-waist-jeans",
@@ -175,7 +175,7 @@ const PRODUCTS = [
     category: "womens-collection",
     imageUrl: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=600&q=80",
     sizes: '["24","26","28","30","32"]', colors: '["Dark Wash","Light Wash","Black"]',
-    brand: "Mango", condition: "good", featured: false, isNew: true,
+    brand: "Mango", productcondition: "good", featured: false, isNew: true,
   },
   {
     slug: "womens-knit-sweater",
@@ -185,7 +185,7 @@ const PRODUCTS = [
     category: "womens-collection",
     imageUrl: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&q=80",
     sizes: '["XS","S","M","L","XL"]', colors: '["Sage Green","Cream","Rust"]',
-    brand: "Uniqlo", condition: "new", featured: true, isNew: true,
+    brand: "Uniqlo", productcondition: "new", featured: true, isNew: true,
   },
   {
     slug: "bodycon-evening-dress",
@@ -195,7 +195,7 @@ const PRODUCTS = [
     category: "womens-collection",
     imageUrl: "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=600&q=80",
     sizes: '["XS","S","M","L"]', colors: '["Burgundy","Black","Emerald"]',
-    brand: "ASOS", condition: "like_new", featured: false, isNew: false,
+    brand: "ASOS", productcondition: "like_new", featured: false, isNew: false,
   },
   {
     slug: "linen-wide-leg-trousers",
@@ -205,19 +205,19 @@ const PRODUCTS = [
     category: "womens-collection",
     imageUrl: "https://images.unsplash.com/photo-1594938298603-c8148c4b4a0e?w=600&q=80",
     sizes: '["XS","S","M","L","XL"]', colors: '["White","Beige","Black"]',
-    brand: "Zara", condition: "good", featured: false, isNew: false,
+    brand: "Zara", productcondition: "good", featured: false, isNew: false,
   },
 
   // ── Shoes ─────────────────────────────────────────────────────────────────
   {
     slug: "nike-air-max-90",
     name: "Nike Air Max 90",
-    description: "Iconic Nike Air Max 90 in white/black. Barely worn, excellent condition. Classic silhouette that never goes out of style.",
+    description: "Iconic Nike Air Max 90 in white/black. Barely worn, excellent productcondition. Classic silhouette that never goes out of style.",
     price: "4500", originalPrice: "8000",
     category: "shoes",
     imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80",
     sizes: '["39","40","41","42","43","44"]', colors: '["White/Black","Grey/Red"]',
-    brand: "Nike", condition: "like_new", featured: true, isNew: false,
+    brand: "Nike", productcondition: "like_new", featured: true, isNew: false,
   },
   {
     slug: "chelsea-leather-boots",
@@ -227,7 +227,7 @@ const PRODUCTS = [
     category: "shoes",
     imageUrl: "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=600&q=80",
     sizes: '["37","38","39","40","41","42"]', colors: '["Tan","Black","Dark Brown"]',
-    brand: "Clarks", condition: "like_new", featured: true, isNew: false,
+    brand: "Clarks", productcondition: "like_new", featured: true, isNew: false,
   },
   {
     slug: "adidas-stan-smith",
@@ -237,7 +237,7 @@ const PRODUCTS = [
     category: "shoes",
     imageUrl: "https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=600&q=80",
     sizes: '["38","39","40","41","42","43"]', colors: '["White/Green","White/Navy"]',
-    brand: "Adidas", condition: "good", featured: true, isNew: true,
+    brand: "Adidas", productcondition: "good", featured: true, isNew: true,
   },
   {
     slug: "block-heel-pumps",
@@ -247,7 +247,7 @@ const PRODUCTS = [
     category: "shoes",
     imageUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=600&q=80",
     sizes: '["36","37","38","39","40"]', colors: '["Nude","Black","Red"]',
-    brand: "Aldo", condition: "like_new", featured: false, isNew: true,
+    brand: "Aldo", productcondition: "like_new", featured: false, isNew: true,
   },
   {
     slug: "timberland-boots",
@@ -257,7 +257,7 @@ const PRODUCTS = [
     category: "shoes",
     imageUrl: "https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=600&q=80",
     sizes: '["40","41","42","43","44","45"]', colors: '["Wheat","Black","Dark Brown"]',
-    brand: "Timberland", condition: "good", featured: true, isNew: false,
+    brand: "Timberland", productcondition: "good", featured: true, isNew: false,
   },
   {
     slug: "white-canvas-sneakers",
@@ -267,7 +267,7 @@ const PRODUCTS = [
     category: "shoes",
     imageUrl: "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=600&q=80",
     sizes: '["36","37","38","39","40","41","42"]', colors: '["White","Black","Cream"]',
-    brand: "Converse", condition: "good", featured: false, isNew: false,
+    brand: "Converse", productcondition: "good", featured: false, isNew: false,
   },
 
   // ── Accessories ───────────────────────────────────────────────────────────
@@ -279,7 +279,7 @@ const PRODUCTS = [
     category: "accessories",
     imageUrl: "https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600&q=80",
     sizes: '["One Size"]', colors: '["Beige","Black","Olive","Pink"]',
-    brand: null, condition: "new", featured: true, isNew: true,
+    brand: null, productcondition: "new", featured: true, isNew: true,
   },
   {
     slug: "leather-belt-brown",
@@ -289,7 +289,7 @@ const PRODUCTS = [
     category: "accessories",
     imageUrl: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80",
     sizes: '["S/M","M/L","L/XL"]', colors: '["Tan","Black","Dark Brown"]',
-    brand: null, condition: "new", featured: false, isNew: false,
+    brand: null, productcondition: "new", featured: false, isNew: false,
   },
   {
     slug: "crossbody-bag-black",
@@ -299,7 +299,7 @@ const PRODUCTS = [
     category: "accessories",
     imageUrl: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&q=80",
     sizes: '["One Size"]', colors: '["Black","Tan","Burgundy"]',
-    brand: "Fossil", condition: "like_new", featured: true, isNew: false,
+    brand: "Fossil", productcondition: "like_new", featured: true, isNew: false,
   },
   {
     slug: "snapback-cap",
@@ -309,7 +309,7 @@ const PRODUCTS = [
     category: "accessories",
     imageUrl: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80",
     sizes: '["One Size"]', colors: '["Black","White","Navy","Red"]',
-    brand: null, condition: "new", featured: false, isNew: true,
+    brand: null, productcondition: "new", featured: false, isNew: true,
   },
   {
     slug: "silk-scarf",
@@ -319,7 +319,7 @@ const PRODUCTS = [
     category: "accessories",
     imageUrl: "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=600&q=80",
     sizes: '["One Size"]', colors: '["Multicolor","Blue","Pink"]',
-    brand: null, condition: "new", featured: false, isNew: true,
+    brand: null, productcondition: "new", featured: false, isNew: true,
   },
   {
     slug: "aviator-sunglasses",
@@ -329,7 +329,7 @@ const PRODUCTS = [
     category: "accessories",
     imageUrl: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=600&q=80",
     sizes: '["One Size"]', colors: '["Gold/Brown","Silver/Grey","Black/Black"]',
-    brand: "Ray-Ban", condition: "like_new", featured: true, isNew: false,
+    brand: "Ray-Ban", productcondition: "like_new", featured: true, isNew: false,
   },
   {
     slug: "canvas-tote-bag",
@@ -339,7 +339,7 @@ const PRODUCTS = [
     category: "accessories",
     imageUrl: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=600&q=80",
     sizes: '["One Size"]', colors: '["Natural","Black","Navy"]',
-    brand: null, condition: "new", featured: false, isNew: false,
+    brand: null, productcondition: "new", featured: false, isNew: false,
   },
 
   // ── Official Wear ─────────────────────────────────────────────────────────
@@ -351,7 +351,7 @@ const PRODUCTS = [
     category: "official-wear",
     imageUrl: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&q=80",
     sizes: '["38","40","42","44","46"]', colors: '["Navy","Charcoal","Black"]',
-    brand: "Next", condition: "like_new", featured: true, isNew: false,
+    brand: "Next", productcondition: "like_new", featured: true, isNew: false,
   },
   {
     slug: "womens-trouser-suit",
@@ -361,7 +361,7 @@ const PRODUCTS = [
     category: "official-wear",
     imageUrl: "https://images.unsplash.com/photo-1594938298603-c8148c4b4a0e?w=600&q=80",
     sizes: '["XS","S","M","L","XL"]', colors: '["Charcoal","Black","Cream"]',
-    brand: "Zara", condition: "like_new", featured: true, isNew: true,
+    brand: "Zara", productcondition: "like_new", featured: true, isNew: true,
   },
   {
     slug: "womens-skirt-suit",
@@ -371,7 +371,7 @@ const PRODUCTS = [
     category: "official-wear",
     imageUrl: "https://images.unsplash.com/photo-1548549557-dbe9155b3a97?w=600&q=80",
     sizes: '["XS","S","M","L"]', colors: '["Black","Navy","Burgundy"]',
-    brand: "Marks & Spencer", condition: "like_new", featured: true, isNew: false,
+    brand: "Marks & Spencer", productcondition: "like_new", featured: true, isNew: false,
   },
   {
     slug: "mens-charcoal-suit",
@@ -381,7 +381,7 @@ const PRODUCTS = [
     category: "official-wear",
     imageUrl: "https://images.unsplash.com/photo-1594938298603-c8148c4b4a0e?w=600&q=80",
     sizes: '["38","40","42","44","46","48"]', colors: '["Charcoal","Dark Grey"]',
-    brand: "Marks & Spencer", condition: "good", featured: false, isNew: false,
+    brand: "Marks & Spencer", productcondition: "good", featured: false, isNew: false,
   },
   {
     slug: "mens-dress-shirt-white",
@@ -391,7 +391,7 @@ const PRODUCTS = [
     category: "official-wear",
     imageUrl: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&q=80",
     sizes: '["S","M","L","XL","XXL"]', colors: '["White","Light Blue","Striped"]',
-    brand: "Calvin Klein", condition: "like_new", featured: false, isNew: true,
+    brand: "Calvin Klein", productcondition: "like_new", featured: false, isNew: true,
   },
   {
     slug: "womens-blazer-cream",
@@ -401,7 +401,7 @@ const PRODUCTS = [
     category: "official-wear",
     imageUrl: "https://images.unsplash.com/photo-1548549557-dbe9155b3a97?w=600&q=80",
     sizes: '["XS","S","M","L","XL"]', colors: '["Cream","Black","Camel"]',
-    brand: "Zara", condition: "like_new", featured: false, isNew: true,
+    brand: "Zara", productcondition: "like_new", featured: false, isNew: true,
   },
 ];
 
@@ -415,11 +415,11 @@ for (const p of PRODUCTS) {
 
   try {
     await connection.execute(
-      `INSERT INTO products (slug, name, description, price, originalPrice, categoryId, imageUrl, sizes, colors, brand, condition, inStock, stockCount, featured, isNew, createdAt, updatedAt)
+      `INSERT INTO products (slug, name, description, price, originalPrice, categoryId, imageUrl, sizes, colors, brand, productcondition, inStock, stockCount, featured, isNew, createdAt, updatedAt)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 5, ?, ?, NOW(), NOW())
        ON DUPLICATE KEY UPDATE name=VALUES(name), price=VALUES(price)`,
       [p.slug, p.name, p.description, p.price, p.originalPrice || null, catId, p.imageUrl,
-       p.sizes || null, p.colors || null, p.brand || null, p.condition || "like_new",
+       p.sizes || null, p.colors || null, p.brand || null, p.productcondition || "like_new",
        p.featured ? 1 : 0, p.isNew ? 1 : 0]
     );
     inserted++;

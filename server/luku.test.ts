@@ -1,11 +1,13 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
+import bcrypt from "bcrypt";
 
 // ─── Mock DB helpers ──────────────────────────────────────────────────────────
 vi.mock("./db", () => ({
   upsertUser: vi.fn(),
   getUserByOpenId: vi.fn(),
+  getUserByEmail: vi.fn(),
   getUserById: vi.fn(),
   getAllUsers: vi.fn().mockResolvedValue([]),
   getAllCategories: vi.fn().mockResolvedValue([
@@ -17,14 +19,14 @@ vi.mock("./db", () => ({
     return Promise.resolve(undefined);
   }),
   getProducts: vi.fn().mockResolvedValue([
-    { id: 1, slug: "test-product", name: "Test Jacket", description: "A test jacket", price: "2500.00", originalPrice: "4000.00", categoryId: 1, imageUrl: "https://example.com/img.jpg", images: null, sizes: '["S","M","L"]', colors: '["Black"]', brand: "TestBrand", condition: "like_new", inStock: true, stockCount: 5, featured: true, isNew: true, tags: null, createdAt: new Date(), updatedAt: new Date() },
+    { id: 1, slug: "test-product", name: "Test Jacket", description: "A test jacket", price: "2500.00", originalPrice: "4000.00", categoryId: 1, imageUrl: "https://example.com/img.jpg", images: null, sizes: '["S","M","L"]', colors: '["Black"]', brand: "TestBrand", productcondition: "like_new", inStock: true, stockCount: 5, featured: true, isNew: true, tags: null, createdAt: new Date(), updatedAt: new Date() },
   ]),
   getProductById: vi.fn().mockImplementation((id: number) => {
-    if (id === 1) return Promise.resolve({ id: 1, slug: "test-product", name: "Test Jacket", description: "A test jacket", price: "2500.00", originalPrice: "4000.00", categoryId: 1, imageUrl: "https://example.com/img.jpg", images: null, sizes: '["S","M","L"]', colors: '["Black"]', brand: "TestBrand", condition: "like_new", inStock: true, stockCount: 5, featured: true, isNew: true, tags: null, createdAt: new Date(), updatedAt: new Date() });
+    if (id === 1) return Promise.resolve({ id: 1, slug: "test-product", name: "Test Jacket", description: "A test jacket", price: "2500.00", originalPrice: "4000.00", categoryId: 1, imageUrl: "https://example.com/img.jpg", images: null, sizes: '["S","M","L"]', colors: '["Black"]', brand: "TestBrand", productcondition: "like_new", inStock: true, stockCount: 5, featured: true, isNew: true, tags: null, createdAt: new Date(), updatedAt: new Date() });
     return Promise.resolve(undefined);
   }),
   getProductBySlug: vi.fn().mockImplementation((slug: string) => {
-    if (slug === "test-product") return Promise.resolve({ id: 1, slug: "test-product", name: "Test Jacket", description: "A test jacket", price: "2500.00", originalPrice: "4000.00", categoryId: 1, imageUrl: "https://example.com/img.jpg", images: null, sizes: '["S","M","L"]', colors: '["Black"]', brand: "TestBrand", condition: "like_new", inStock: true, stockCount: 5, featured: true, isNew: true, tags: null, createdAt: new Date(), updatedAt: new Date() });
+    if (slug === "test-product") return Promise.resolve({ id: 1, slug: "test-product", name: "Test Jacket", description: "A test jacket", price: "2500.00", originalPrice: "4000.00", categoryId: 1, imageUrl: "https://example.com/img.jpg", images: null, sizes: '["S","M","L"]', colors: '["Black"]', brand: "TestBrand", productcondition: "like_new", inStock: true, stockCount: 5, featured: true, isNew: true, tags: null, createdAt: new Date(), updatedAt: new Date() });
     return Promise.resolve(undefined);
   }),
   getCartItems: vi.fn().mockResolvedValue([]),
@@ -97,6 +99,41 @@ describe("auth", () => {
     const result = await caller.auth.logout();
     expect(result.success).toBe(true);
     expect((ctx.res.clearCookie as ReturnType<typeof vi.fn>)).toHaveBeenCalled();
+  });
+
+  it("signup creates new user and sets cookie", async () => {
+    const ctx = createPublicCtx();
+    const dummy: any = {};
+    ctx.res.cookie = vi.fn((name, val, opts) => { dummy[name] = val; });
+    (db.getUserByEmail as any).mockResolvedValue(undefined);
+    (db.getAllUsers as any).mockResolvedValue([]);
+    (db.upsertUser as any).mockResolvedValue(undefined);
+
+    const caller = appRouter.createCaller(ctx as any);
+    const user = await caller.auth.signup({ email: "a@b.com", password: "pass123", name: "foo" });
+    expect(user.email).toBe("a@b.com");
+    expect(ctx.res.cookie).toHaveBeenCalled();
+  });
+
+  it("login succeeds with correct credentials", async () => {
+    const ctx = createPublicCtx();
+    const dummy: any = {};
+    ctx.res.cookie = vi.fn((name, val, opts) => { dummy[name] = val; });
+    const fakeUser = { id: 5, email: "a@b.com", passwordHash: "hash" };
+    (db.getUserByEmail as any).mockResolvedValue(fakeUser);
+    vi.spyOn(bcrypt, "compare").mockResolvedValue(true as any);
+
+    const caller = appRouter.createCaller(ctx as any);
+    const user = await caller.auth.login({ email: "a@b.com", password: "pass123" });
+    expect(user).toBe(fakeUser);
+    expect(ctx.res.cookie).toHaveBeenCalled();
+  });
+
+  it("login rejects bad credentials", async () => {
+    const ctx = createPublicCtx();
+    const caller = appRouter.createCaller(ctx as any);
+    (db.getUserByEmail as any).mockResolvedValue(null);
+    await expect(caller.auth.login({ email: "no@one", password: "x" })).rejects.toThrow("Invalid credentials");
   });
 });
 

@@ -74,7 +74,7 @@ CREATE TABLE `products` (
 	`sizes` text,
 	`colors` text,
 	`brand` varchar(128),
-	`condition` enum('new','like_new','good','fair') DEFAULT 'like_new',
+	`productcondition` enum('new','like_new','good','fair') DEFAULT 'like_new',
 	`inStock` boolean NOT NULL DEFAULT true,
 	`stockCount` int DEFAULT 1,
 	`featured` boolean DEFAULT false,

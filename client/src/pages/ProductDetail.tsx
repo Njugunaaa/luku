@@ -223,11 +223,11 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* Condition */}
-            {product.condition && (
+            {/* productcondition */}
+            {product.productcondition && (
               <div className="inline-flex items-center gap-2 bg-secondary px-3 py-1.5 rounded-full w-fit mb-5">
                 <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-                <span className="text-xs font-medium capitalize">{product.condition.replace("_", " ")} condition</span>
+                <span className="text-xs font-medium capitalize">{product.productcondition.replace("_", " ")} productcondition</span>
               </div>
             )}
 

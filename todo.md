@@ -18,7 +18,7 @@
 
 ## Frontend - Pages
 - [x] Homepage: hero section, card stack carousel, category showcase, scroll animations
-- [x] Category page: product grid with search, condition filter, sort, grid/list view
+- [x] Category page: product grid with search, productcondition filter, sort, grid/list view
 - [x] Product detail page: images, description, size/color selector, add to cart, WhatsApp order button
 - [x] Cart page: items list, quantity controls, subtotal, proceed to checkout
 - [x] Checkout page: address form, delivery toggle, order summary, submit

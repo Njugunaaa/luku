@@ -41,8 +41,8 @@ const SORT_OPTIONS = [
   { value: "price-desc", label: "Price: High to Low" },
 ];
 
-const CONDITION_FILTERS = [
-  { value: "", label: "All Conditions" },
+const productcondition_FILTERS = [
+  { value: "", label: "All productconditions" },
   { value: "new", label: "New" },
   { value: "like_new", label: "Like New" },
   { value: "good", label: "Good" },
@@ -56,7 +56,7 @@ export default function Category() {
 
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("newest");
-  const [conditionFilter, setConditionFilter] = useState("");
+  const [productconditionFilter, setproductconditionFilter] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
 
@@ -72,13 +72,13 @@ export default function Category() {
       const q = search.toLowerCase();
       list = list.filter(p => p.name.toLowerCase().includes(q) || (p.brand ?? "").toLowerCase().includes(q));
     }
-    if (conditionFilter) {
-      list = list.filter(p => p.condition === conditionFilter);
+    if (productconditionFilter) {
+      list = list.filter(p => p.productcondition === productconditionFilter);
     }
     if (sortBy === "price-asc") list.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
     else if (sortBy === "price-desc") list.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
     return list;
-  }, [products, search, conditionFilter, sortBy]);
+  }, [products, search, productconditionFilter, sortBy]);
 
   return (
     <div className="min-h-screen">
@@ -162,14 +162,14 @@ export default function Category() {
             exit={{ opacity: 0, height: 0 }}
             className="bg-card border border-border rounded-xl p-4 mb-6"
           >
-            <h3 className="text-sm font-semibold mb-3">Filter by Condition</h3>
+            <h3 className="text-sm font-semibold mb-3">Filter by productcondition</h3>
             <div className="flex flex-wrap gap-2">
-              {CONDITION_FILTERS.map(f => (
+              {productcondition_FILTERS.map(f => (
                 <button
                   key={f.value}
-                  onClick={() => setConditionFilter(f.value)}
+                  onClick={() => setproductconditionFilter(f.value)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-                    conditionFilter === f.value
+                    productconditionFilter === f.value
                       ? "bg-primary text-primary-foreground border-primary"
                       : "border-border hover:bg-secondary"
                   }`}
@@ -207,7 +207,7 @@ export default function Category() {
             </div>
             <h3 className="font-semibold text-lg mb-2">No products found</h3>
             <p className="text-muted-foreground text-sm">Try adjusting your search or filters</p>
-            <Button variant="outline" className="mt-4" onClick={() => { setSearch(""); setConditionFilter(""); }}>
+            <Button variant="outline" className="mt-4" onClick={() => { setSearch(""); setproductconditionFilter(""); }}>
               Clear Filters
             </Button>
           </div>

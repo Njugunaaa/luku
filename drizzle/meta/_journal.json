@@ -15,6 +15,13 @@
       "when": 1772621037218,
       "tag": "0001_jittery_kitty_pryde",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1772708719331,
+      "tag": "0002_huge_zodiak",
+      "breakpoints": true
     }
   ]
 }

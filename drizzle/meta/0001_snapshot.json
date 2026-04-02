@@ -504,8 +504,8 @@
           "notNull": false,
           "autoincrement": false
         },
-        "condition": {
-          "name": "condition",
+        "productcondition": {
+          "name": "productcondition",
           "type": "enum('new','like_new','good','fair')",
           "primaryKey": false,
           "notNull": false,
