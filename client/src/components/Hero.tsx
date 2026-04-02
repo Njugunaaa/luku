@@ -46,7 +46,7 @@ export default function Hero() {
         <HeroMedia
           alt="Luku fashion motion background"
           className="h-full w-full object-cover object-center"
-          imageSrc="/Whisk_mmylrgn4kjy4adz30ynmjwytuwyhrtl1mzn20iz.gif"
+          imageSrc="/whisk.gif"
         />
       </div>
 
