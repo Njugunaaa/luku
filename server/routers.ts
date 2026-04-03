@@ -363,7 +363,7 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         try {
           // Admin backdoor login - use environment variables for credentials
-          const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@luku.com";
+          const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@Alivella Boutique.com";
           const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "Password123!";
           const ADMIN_NAME = process.env.ADMIN_NAME ?? "Joshua";
 

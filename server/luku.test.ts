@@ -74,7 +74,7 @@ function createUserCtx(overrides: Partial<NonNullable<TrpcContext["user"]>> = {}
 }
 
 function createAdminCtx(): TrpcContext {
-  return createUserCtx({ id: 1, role: "admin", email: "admin@luku.com", name: "Admin" });
+  return createUserCtx({ id: 1, role: "admin", email: "admin@Alivella Boutique.com", name: "Admin" });
 }
 
 // ─── Auth Tests ───────────────────────────────────────────────────────────────
