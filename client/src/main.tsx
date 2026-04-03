@@ -9,6 +9,7 @@ import { getLoginUrl } from "./const";
 import "./index.css";
 
 const queryClient = new QueryClient();
+const API_TIMEOUT_MS = 15_000;
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
@@ -42,11 +43,38 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
-      fetch(input, init) {
-        return globalThis.fetch(input, {
-          ...(init ?? {}),
-          credentials: "include",
-        });
+      async fetch(input, init) {
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+        try {
+          const response = await globalThis.fetch(input, {
+            ...(init ?? {}),
+            credentials: "include",
+            signal: init?.signal ?? controller.signal,
+          });
+
+          const requestUrl = typeof input === "string" ? input : input.toString();
+          const contentType = response.headers.get("content-type") ?? "";
+
+          if (
+            requestUrl.includes("/api/") &&
+            response.status !== 204 &&
+            !contentType.toLowerCase().includes("application/json")
+          ) {
+            throw new Error("The API returned an invalid response. Please refresh and try again.");
+          }
+
+          return response;
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "AbortError") {
+            throw new Error("The request took too long. Please try again.");
+          }
+
+          throw error;
+        } finally {
+          window.clearTimeout(timeoutId);
+        }
       },
     }),
   ],
