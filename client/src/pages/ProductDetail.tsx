@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import ProductCard from "@/components/ProductCard";
 
-const WHATSAPP_NUMBER = "254700000000"; // Update with actual number
+const WHATSAPP_NUMBER = "254701887586"; // Update with actual number
 
 export default function ProductDetail() {
   const params = useParams<{ slug: string }>();
@@ -110,7 +110,7 @@ export default function ProductDetail() {
     const sizeText = selectedSize ? `\nSize: ${selectedSize}` : "";
     const colorText = selectedColor ? `\nColor: ${selectedColor}` : "";
     const message = encodeURIComponent(
-      `Hi Luku! I'd like to order:\n\n*${product.name}*\nPrice: KES ${parseFloat(product.price).toLocaleString()}${sizeText}${colorText}\nQty: ${quantity}\n\nProduct link: ${window.location.href}\n\nPlease confirm availability.`
+      `Hi Alivella Boutique! I'd like to order:\n\n*${product.name}*\nPrice: KES ${parseFloat(product.price).toLocaleString()}${sizeText}${colorText}\nQty: ${quantity}\n\nProduct link: ${window.location.href}\n\nPlease confirm availability.`
     );
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, "_blank");
   };

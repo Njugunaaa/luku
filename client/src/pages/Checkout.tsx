@@ -98,7 +98,7 @@ export default function Checkout() {
               Send payment to our M-Pesa number and WhatsApp us your confirmation.
             </p>
             <a
-              href={`https://wa.me/254700000000?text=${encodeURIComponent(`Hi Luku! I just placed Order #${orderId}. Please send me payment details.`)}`}
+              href={`https://wa.me/254701887586?text=${encodeURIComponent(`Hi Alivella Boutique! I just placed Order #${orderId}. Please send me payment details.`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-whatsapp w-full justify-center"
