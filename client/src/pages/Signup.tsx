@@ -63,6 +63,10 @@ export default function Signup() {
         setError("Authentication is temporarily unavailable - please try again later.");
       } else if (err.data?.code === "CONFLICT") {
         setError("This email is already registered. Please sign in instead.");
+      } else if (err.message.includes("too long")) {
+        setError("Signup timed out. Please try again in a moment.");
+      } else if (err.message.includes("invalid response")) {
+        setError("The live site API is misconfigured right now. Please redeploy after updating the Vercel settings.");
       } else {
         setError(err.message || "Signup failed");
       }
@@ -77,8 +81,14 @@ export default function Signup() {
       const redirectUrl = redirectStore.consumeForSignedInUser("/dashboard");
       setLocation(redirectUrl);
     },
-    onError: () => {
-      setError("Signup succeeded, but auto-login failed. Please sign in manually.");
+    onError: (err) => {
+      if (err.message.includes("too long")) {
+        setError("Account created, but the sign-in step timed out. Please sign in manually.");
+      } else if (err.message.includes("invalid response")) {
+        setError("Account created, but the live site API is misconfigured. Please sign in again after redeploying.");
+      } else {
+        setError("Signup succeeded, but auto-login failed. Please sign in manually.");
+      }
       setLoading(false);
     },
   });

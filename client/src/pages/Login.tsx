@@ -31,6 +31,10 @@ export default function Login() {
         setError("Unable to reach authentication service - please try again later.");
       } else if (err.data?.code === "UNAUTHORIZED") {
         setError("Invalid email or password. Please try again.");
+      } else if (err.message.includes("too long")) {
+        setError("Sign in timed out. Please try again in a moment.");
+      } else if (err.message.includes("invalid response")) {
+        setError("The live site API is misconfigured right now. Please redeploy after updating the Vercel settings.");
       } else {
         setError(err.message || "Login failed");
       }
@@ -63,8 +67,8 @@ export default function Login() {
 
   return (
     <div className="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-secondary px-4 py-10">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(227,180,74,0.12),transparent_30%)]" />
-      <Card className="relative z-10 w-full max-w-md border-border/80 bg-card shadow-xl">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(236,72,153,0.14),transparent_32%)]" />
+      <Card className="relative z-10 w-full max-w-md border-border/80 bg-card shadow-xl pointer-events-auto">
         <CardHeader className="space-y-2">
           <CardTitle className="text-3xl font-bold">Welcome Back</CardTitle>
           <CardDescription>Sign in to your account to continue shopping</CardDescription>

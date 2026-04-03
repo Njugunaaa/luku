@@ -269,6 +269,17 @@ const adminRouter = router({
     return { current, previous, period: "monthly" };
   }),
 
+  yearlySummary: adminProcedure.query(async () => {
+    const now = new Date();
+    const yearStart = new Date(now.getFullYear(), 0, 1);
+    const prevYearStart = new Date(now.getFullYear() - 1, 0, 1);
+    const prevYearEnd = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59, 999);
+
+    const current = await getOrderSummary(yearStart, now);
+    const previous = await getOrderSummary(prevYearStart, prevYearEnd);
+    return { current, previous, period: "yearly" };
+  }),
+
   allProducts: adminProcedure.query(async () => {
     return getProducts({ limit: 200 });
   }),
