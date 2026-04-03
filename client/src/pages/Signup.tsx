@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { redirectStore } from "@/lib/redirectStore";
 import { trpc } from "@/lib/trpc";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { AlertCircle, ArrowRight, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -17,7 +17,7 @@ const SIGNUP_IMAGES = [
   "https://images.unsplash.com/photo-1594938298603-c8148c4b4a0e?w=1400&q=80",
 ];
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -28,7 +28,7 @@ const containerVariants = {
   },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 18 },
   visible: {
     opacity: 1,

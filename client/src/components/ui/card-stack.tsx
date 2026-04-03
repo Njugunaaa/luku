@@ -18,7 +18,7 @@ export type CardStackItem = {
 };
 
 export type CardStackProps<T extends CardStackItem> = {
-  items: T[];
+  items: readonly T[];
   initialIndex?: number;
   maxVisible?: number;
   cardWidth?: number;
