@@ -15,7 +15,7 @@ export default function Footer() {
               <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center">
                 <span className="text-accent-foreground font-display font-bold text-lg leading-none">L</span>
               </div>
-              <span className="font-display font-bold text-2xl">Luku</span>
+              <span className="font-display font-bold text-2xl">Alivella Boutique</span>
             </div>
             <p className="text-primary-foreground/70 text-sm leading-relaxed mb-5">
               Your go-to destination for premium thrifted fashion. Curated pieces for the bold, the stylish, and the conscious.
@@ -25,11 +25,11 @@ export default function Footer() {
                 className="w-9 h-9 rounded-full bg-white/10 hover:bg-[#25D366] flex items-center justify-center transition-colors">
                 <MessageCircle className="w-4 h-4" />
               </a>
-              <a href="https://instagram.com/luku_store" target="_blank" rel="noopener noreferrer"
+              <a href="https://instagram.com/Alivella Boutique_store" target="_blank" rel="noopener noreferrer"
                 className="w-9 h-9 rounded-full bg-white/10 hover:bg-pink-500 flex items-center justify-center transition-colors">
                 <Instagram className="w-4 h-4" />
               </a>
-              <a href="https://twitter.com/luku_store" target="_blank" rel="noopener noreferrer"
+              <a href="https://twitter.com/Alivella Boutique_store" target="_blank" rel="noopener noreferrer"
                 className="w-9 h-9 rounded-full bg-white/10 hover:bg-sky-500 flex items-center justify-center transition-colors">
                 <Twitter className="w-4 h-4" />
               </a>
@@ -62,7 +62,7 @@ export default function Footer() {
             <h4 className="font-semibold text-sm uppercase tracking-widest mb-4 text-primary-foreground/50">Info</h4>
             <ul className="space-y-2.5">
               {[
-                { label: "About Luku", href: "/about" },
+                { label: "About Alivella Boutique", href: "/about" },
                 { label: "How It Works", href: "/how-it-works" },
                 { label: "Sizing Guide", href: "/sizing" },
                 { label: "Returns Policy", href: "/returns" },
@@ -94,8 +94,8 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-3 text-sm text-primary-foreground/70">
                 <Mail className="w-4 h-4 shrink-0 text-accent" />
-                <a href="mailto:hello@luku.com" className="hover:text-primary-foreground transition-colors">
-                  hello@luku.com
+                <a href="mailto:hello@Alivella Boutique.com" className="hover:text-primary-foreground transition-colors">
+                  hello@Alivella Boutique.com
                 </a>
               </li>
               <li className="flex items-center gap-3 text-sm text-primary-foreground/70">
@@ -114,7 +114,7 @@ export default function Footer() {
       <div className="border-t border-white/10">
         <div className="container py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-primary-foreground/50">
-            &copy; {currentYear} Luku Store. All rights reserved.
+            &copy; {currentYear} Alivella Boutique Store. All rights reserved.
           </p>
           <p className="text-xs text-primary-foreground/50">
             Made with ♥ for the youth
