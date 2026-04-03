@@ -1,109 +1,93 @@
+"use client";
+
 import { motion } from "framer-motion";
-import { ArrowRight, ShoppingBag } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import { Link } from "wouter";
 
-type HeroMediaProps = {
-  alt: string;
-  className?: string;
-  imageSrc: string;
-  posterSrc?: string;
-  videoSrc?: string;
-};
-
-function HeroMedia({ alt, className = "", imageSrc, posterSrc, videoSrc }: HeroMediaProps) {
-  if (videoSrc) {
-    return (
-      <video
-        autoPlay
-        className={className}
-        loop
-        muted
-        playsInline
-        poster={posterSrc ?? imageSrc}
-        preload="metadata"
-      >
-        <source src={videoSrc} type="video/mp4" />
-      </video>
-    );
-  }
-
-  return (
-    <img
-      alt={alt}
-      className={className}
-      decoding="async"
-      fetchPriority="high"
-      loading="eager"
-      src={imageSrc}
-    />
-  );
-}
+// HEADER_HEIGHT must match exactly what header.tsx exports
+const HEADER_HEIGHT = 58;
 
 export default function Hero() {
   return (
-    <section className="relative isolate flex min-h-[72svh] items-end overflow-clip bg-primary sm:min-h-[78svh] lg:min-h-[88svh]">
-      <div className="absolute inset-0">
-        <HeroMedia
-          alt="Luku fashion motion background"
-          className="h-full w-full object-cover object-center"
-          imageSrc="/whisk.gif"
-        />
-      </div>
+    /*
+      calc(100svh - HEADER_HEIGHT) = exactly the remaining viewport
+      after the header. The video fills this space perfectly — no
+      scrolling needed to see the full frame on any screen including
+      HP Pavilion laptops.
+      NO overflow-clip, NO vignette, NO dark overlays.
+    */
+    <section
+      className="relative w-full overflow-hidden bg-black"
+      style={{ height: `calc(100svh - ${HEADER_HEIGHT}px)` }}
+    >
 
-      <div className="container relative z-10 py-16 sm:py-20 lg:py-24">
-        <div className="max-w-xl text-left">
-          <motion.p
-            animate={{ opacity: 1, y: 0 }}
-            className="hero-copy-shadow text-xs font-semibold uppercase tracking-[0.34em] text-primary-foreground sm:text-sm"
-            initial={{ opacity: 0, y: 16 }}
-            transition={{ duration: 0.45 }}
-          >
-            Curated thrift
-          </motion.p>
+      {/* ── Video — fills section exactly, no cropping ────────────── */}
+      <video
+        className="absolute inset-0 h-full w-full object-cover object-center"
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        src="/vid.mp4"
+      />
 
-          <motion.h1
-            animate={{ opacity: 1, y: 0 }}
-            className="hero-copy-shadow mt-4 text-balance font-display text-4xl font-semibold leading-[0.94] text-primary-foreground sm:text-5xl md:text-6xl lg:text-7xl"
-            initial={{ opacity: 0, y: 22 }}
-            transition={{ delay: 0.08, duration: 0.55 }}
-          >
-            Dress bold.
-            <br />
-            Shop rare.
-          </motion.h1>
+      {/* ── Grain — barely visible, just adds film texture ────────── */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-[1] opacity-[0.022]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+          backgroundSize: "200px 200px",
+        }}
+      />
 
-          <motion.p
-            animate={{ opacity: 1, y: 0 }}
-            className="hero-copy-shadow mt-5 max-w-lg text-sm leading-7 text-primary-foreground sm:text-base md:text-lg"
-            initial={{ opacity: 0, y: 22 }}
-            transition={{ delay: 0.16, duration: 0.55 }}
-          >
-            Premium streetwear, refined essentials, and standout pieces sourced for modern wardrobes.
-          </motion.p>
+      {/* ── CTA — floats at bottom center, zero background ───────── */}
+      <motion.div
+        className="
+          absolute bottom-0 left-0 right-0 z-10
+          flex flex-col items-center gap-3
+          pb-10 sm:pb-12
+          px-4 text-center
+        "
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <motion.p
+          className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.5em] text-white/60"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.55 }}
+        >
+          Welcome to Alivella
+        </motion.p>
 
-          <motion.div
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-8 flex flex-col gap-3 sm:flex-row"
-            initial={{ opacity: 0, y: 22 }}
-            transition={{ delay: 0.24, duration: 0.55 }}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.36, duration: 0.55 }}
+        >
+          <Link
+            href="/category/mens-collection"
+            className="
+              group inline-flex items-center gap-2.5
+              rounded-full
+              bg-pink-400 hover:bg-pink-300
+              px-8 py-3.5
+              text-sm font-semibold text-white
+              shadow-[0_0_40px_rgba(244,114,182,0.55)]
+              hover:shadow-[0_0_56px_rgba(244,114,182,0.75)]
+              transition-all duration-300
+              hover:-translate-y-0.5 active:translate-y-0
+            "
           >
-            <Link
-              className="cta-swoop inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-all duration-300 sm:px-7"
-              href="/category/mens-collection"
-            >
-              <ShoppingBag className="h-4 w-4" />
-              Shop now
-            </Link>
-            <Link
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-slate-800 bg-slate-950 px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[0_10px_28px_rgba(0,0,0,0.24)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-900 sm:px-7"
-              href="/category/official-wear"
-            >
-              View collection
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </motion.div>
-        </div>
-      </div>
+            <ShoppingBag className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
+            Shop with us now
+          </Link>
+        </motion.div>
+      </motion.div>
+
     </section>
   );
 }
