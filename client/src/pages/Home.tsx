@@ -284,7 +284,7 @@ export default function Home() {
         <ContainerScroll
           titleComponent={
             <div className="px-4 text-center">
-              <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-accent">The Luku Experience</p>
+              <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-accent">The Alivella Boutique Experience</p>
               <h2 className="font-display mb-4 text-4xl font-bold leading-tight text-primary-foreground md:text-6xl">
                 Fashion that tells
                 <br />
@@ -304,7 +304,7 @@ export default function Home() {
             />
             <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 via-transparent to-transparent p-8">
               <div>
-                <h3 className="mb-2 font-display text-3xl font-bold text-white">The Luku Store</h3>
+                <h3 className="mb-2 font-display text-3xl font-bold text-white">The Alivella Boutique Store</h3>
                 <p className="text-sm text-white/80">Nairobi&apos;s finest thrift destination</p>
               </div>
             </div>
