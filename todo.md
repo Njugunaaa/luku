@@ -1,4 +1,4 @@
-# Luku - Youth Thrift Store TODO
+# Alivella Boutique - Youth Thrift Store TODO
 
 ## Database & Backend
 - [x] Database schema: products, categories, cart, orders, order_items tables

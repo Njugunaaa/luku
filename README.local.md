@@ -1,6 +1,6 @@
-# Luku - Local Development Setup Guide
+# Alivella Boutique - Local Development Setup Guide
 
-This guide walks you through running the Luku thrift store locally from scratch.
+This guide walks you through running the Alivella Boutique thrift store locally from scratch.
 
 ---
 
@@ -20,7 +20,7 @@ Ensure the following are installed on your machine:
 
 ```bash
 git clone <your-repo-url>
-cd luku
+cd Alivella Boutique
 pnpm install
 ```
 
@@ -32,7 +32,7 @@ Create a `.env` file in the project root:
 
 ```env
 # Database
-DATABASE_URL=mysql://root:yourpassword@localhost:3306/luku
+DATABASE_URL=mysql://root:yourpassword@localhost:3306/Alivella Boutique
 
 # Auth (Manus OAuth - leave as-is for local dev)
 JWT_SECRET=your-random-secret-here
@@ -57,7 +57,7 @@ OWNER_NAME=Your Name
 
 ```bash
 mysql -u root -p
-CREATE DATABASE luku CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE Alivella Boutique CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 EXIT;
 ```
 
@@ -104,7 +104,7 @@ The app will be available at: **http://localhost:3000**
 After signing in for the first time, promote your user to admin via SQL:
 
 ```sql
-USE luku;
+USE Alivella Boutique;
 UPDATE users SET role = 'admin' WHERE email = 'your@email.com';
 ```
 
@@ -128,7 +128,7 @@ Then navigate to **http://localhost:3000/admin** to access the admin dashboard.
 ## Project Structure
 
 ```
-luku/
+Alivella Boutique/
 ├── client/src/
 │   ├── pages/          # Route pages (Home, Category, ProductDetail, Cart, Checkout, Admin...)
 │   ├── components/     # Reusable components (Header, Footer, ProductCard...)
@@ -137,7 +137,7 @@ luku/
 ├── server/
 │   ├── routers.ts      # All tRPC procedures
 │   ├── db.ts           # Database query helpers
-│   └── luku.test.ts    # Vitest tests (31 tests)
+│   └── Alivella Boutique.test.ts    # Vitest tests (31 tests)
 ├── drizzle/
 │   └── schema.ts       # Database schema
 └── scripts/

@@ -1,6 +1,6 @@
-# Luku Local Development Complete Guide
+# Alivella Boutique Local Development Complete Guide
 
-This guide walks you through setting up Luku on your local machine step-by-step, from cloning the repository to running the development server.
+This guide walks you through setting up Alivella Boutique on your local machine step-by-step, from cloning the repository to running the development server.
 
 ---
 
@@ -52,7 +52,7 @@ pnpm --version
 
 ### 1.2 MySQL Database
 
-Luku uses MySQL to store products, users, orders, and cart data.
+Alivella Boutique uses MySQL to store products, users, orders, and cart data.
 
 **Windows:**
 1. Download MySQL Community Server from https://dev.mysql.com/downloads/mysql/
@@ -108,8 +108,8 @@ sudo apt install git
 Navigate to where you want to store the project and clone it from GitHub.
 
 ```bash
-git clone https://github.com/yourusername/luku.git
-cd luku
+git clone https://github.com/yourusername/Alivella Boutique.git
+cd Alivella Boutique
 ```
 
 If you don't have Git, download the ZIP from GitHub and extract it.
@@ -118,7 +118,7 @@ If you don't have Git, download the ZIP from GitHub and extract it.
 
 ## Part 3: Install Dependencies
 
-Inside the `luku` folder, install all required npm packages:
+Inside the `Alivella Boutique` folder, install all required npm packages:
 
 ```bash
 pnpm install
@@ -132,9 +132,9 @@ This reads `package.json` and downloads all dependencies (React, Express, tRPC, 
 
 ## Part 4: Set Up Environment Variables
 
-Create a `.env` file in the root of the `luku` folder. This file stores sensitive configuration like database credentials.
+Create a `.env` file in the root of the `Alivella Boutique` folder. This file stores sensitive configuration like database credentials.
 
-**Step 1:** In VS Code, right-click the `luku` folder in the Explorer and select "New File"
+**Step 1:** In VS Code, right-click the `Alivella Boutique` folder in the Explorer and select "New File"
 
 **Step 2:** Name it `.env` (note the dot at the start)
 
@@ -142,7 +142,7 @@ Create a `.env` file in the root of the `luku` folder. This file stores sensitiv
 
 ```env
 # ─── Database ────────────────────────────────────────────────────────────
-DATABASE_URL=mysql://root:yourpassword@localhost:3306/luku
+DATABASE_URL=mysql://root:yourpassword@localhost:3306/Alivella Boutique
 
 # ─── Authentication (Manus OAuth) ────────────────────────────────────────
 JWT_SECRET=your-random-secret-here-make-it-long-and-random
@@ -163,7 +163,7 @@ OWNER_NAME=Your Name
 
 | Variable | What It Does | Example |
 |----------|-------------|---------|
-| `DATABASE_URL` | Connection string to MySQL | `mysql://root:password123@localhost:3306/luku` |
+| `DATABASE_URL` | Connection string to MySQL | `mysql://root:password123@localhost:3306/Alivella Boutique` |
 | `JWT_SECRET` | Secret key for signing session tokens | `super-secret-random-string-123` |
 | `VITE_APP_ID` | Your Manus OAuth app ID (get from Manus dashboard) | `app_123456` |
 | `OWNER_OPEN_ID` | Your unique Manus user ID | `user_abc123` |
@@ -175,7 +175,7 @@ OWNER_NAME=Your Name
 
 ## Part 5: Create the MySQL Database
 
-Open MySQL and create the `luku` database:
+Open MySQL and create the `Alivella Boutique` database:
 
 **Windows (Command Prompt):**
 ```cmd
@@ -190,11 +190,11 @@ mysql -u root -p
 Enter your MySQL root password when prompted. Then run:
 
 ```sql
-CREATE DATABASE luku CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE Alivella Boutique CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 EXIT;
 ```
 
-**What this does:** Creates a new empty database called `luku` with UTF-8 character support (handles emojis, special characters, etc.).
+**What this does:** Creates a new empty database called `Alivella Boutique` with UTF-8 character support (handles emojis, special characters, etc.).
 
 ---
 
@@ -253,7 +253,7 @@ pnpm dev
 
 Open your browser and go to: **http://localhost:3000**
 
-You should see the Luku homepage with the hero section, category grid, and card stack carousel.
+You should see the Alivella Boutique homepage with the hero section, category grid, and card stack carousel.
 
 ---
 
@@ -262,7 +262,7 @@ You should see the Luku homepage with the hero section, category grid, and card 
 Once the server is running, familiarize yourself with the codebase:
 
 ```
-luku/
+Alivella Boutique/
 ├── client/
 │   ├── src/
 │   │   ├── pages/
@@ -289,7 +289,7 @@ luku/
 ├── server/
 │   ├── routers.ts                ← All API endpoints (tRPC)
 │   ├── db.ts                     ← Database queries
-│   ├── luku.test.ts              ← 31 vitest tests
+│   ├── Alivella Boutique.test.ts              ← 31 vitest tests
 │   └── _core/                    ← Framework internals
 ├── drizzle/
 │   ├── schema.ts                 ← Database table definitions
@@ -341,7 +341,7 @@ mysql -u root -p
 
 Then:
 ```sql
-USE luku;
+USE Alivella Boutique;
 UPDATE users SET role = 'admin' WHERE email = 'your@email.com';
 EXIT;
 ```
@@ -385,10 +385,10 @@ Keep these commands handy:
 ### Database connection error
 **Solution:** Check your `DATABASE_URL` in `.env`:
 ```env
-DATABASE_URL=mysql://root:yourpassword@localhost:3306/luku
+DATABASE_URL=mysql://root:yourpassword@localhost:3306/Alivella Boutique
 ```
 - Replace `yourpassword` with your actual MySQL root password
-- Make sure the database `luku` exists (run Part 5 again if needed)
+- Make sure the database `Alivella Boutique` exists (run Part 5 again if needed)
 
 ### Port 3000 already in use
 **Solution:** Kill the process using port 3000:
@@ -431,4 +431,4 @@ Before deploying to Vercel (covered in next guide), ensure:
 
 ---
 
-You're now ready to run Luku locally! In the next guide, I'll walk you through deploying to Vercel.
+You're now ready to run Alivella Boutique locally! In the next guide, I'll walk you through deploying to Vercel.

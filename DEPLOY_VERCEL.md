@@ -1,6 +1,6 @@
-# Luku Vercel Deployment Complete Guide
+# Alivella Boutique Vercel Deployment Complete Guide
 
-This guide walks you through deploying Luku to Vercel, a platform that hosts your app on the internet so anyone can access it.
+This guide walks you through deploying Alivella Boutique to Vercel, a platform that hosts your app on the internet so anyone can access it.
 
 ---
 
@@ -36,20 +36,20 @@ If your code isn't on GitHub yet, do this first.
 ### 3.1 Create a GitHub Repository
 
 1. Go to https://github.com/new
-2. Name it `luku`
+2. Name it `Alivella Boutique`
 3. Choose "Private" (recommended for production)
 4. Click "Create repository"
 
 ### 3.2 Push Your Local Code to GitHub
 
-In your terminal (in the `luku` folder):
+In your terminal (in the `Alivella Boutique` folder):
 
 ```bash
 git init
 git add .
-git commit -m "Initial commit: Luku thrift store"
+git commit -m "Initial commit: Alivella Boutique thrift store"
 git branch -M main
-git remote add origin https://github.com/yourusername/luku.git
+git remote add origin https://github.com/yourusername/Alivella Boutique.git
 git push -u origin main
 ```
 
@@ -84,7 +84,7 @@ PlanetScale is a managed MySQL hosting service with a free tier.
 
 **Step 2:** Create a new database:
 - Click "Create a new database"
-- Name it `luku`
+- Name it `Alivella Boutique`
 - Choose region closest to you
 - Click "Create database"
 
@@ -92,7 +92,7 @@ PlanetScale is a managed MySQL hosting service with a free tier.
 - Click on your database
 - Go to "Connect" tab
 - Select "Node.js"
-- Copy the connection string (looks like: `mysql://xxx:yyy@zzz.psdb.cloud/luku?sslaccept=strict`)
+- Copy the connection string (looks like: `mysql://xxx:yyy@zzz.psdb.cloud/Alivella Boutique?sslaccept=strict`)
 
 **Step 4:** Save this for later — you'll paste it into Vercel
 
@@ -137,7 +137,7 @@ Railway is another popular option with free tier.
 1. Go to https://vercel.com/dashboard
 2. Click "Add New..." → "Project"
 3. Click "Import Git Repository"
-4. Find and select your `luku` repository
+4. Find and select your `Alivella Boutique` repository
 5. Click "Import"
 
 ### 6.2 Configure Environment Variables
@@ -162,7 +162,7 @@ Vercel will ask for environment variables. Fill in:
 
 **Example:**
 ```
-DATABASE_URL = mysql://user:pass@host/luku?sslaccept=strict
+DATABASE_URL = mysql://user:pass@host/Alivella Boutique?sslaccept=strict
 JWT_SECRET = abc123xyz789...
 VITE_APP_ID = app_12345
 ```
@@ -199,7 +199,7 @@ npm install -g vercel
 vercel link
 ```
 
-Select your `luku` project when prompted.
+Select your `Alivella Boutique` project when prompted.
 
 ### 7.3 Run Migrations
 
@@ -231,8 +231,8 @@ node scripts/seed.mjs
 Your site is now live! Find the URL:
 
 1. Go to https://vercel.com/dashboard
-2. Click your `luku` project
-3. You'll see a URL like: `https://luku-xyz.vercel.app`
+2. Click your `Alivella Boutique` project
+3. You'll see a URL like: `https://Alivella Boutique-xyz.vercel.app`
 
 Click it to visit your live site!
 
@@ -240,7 +240,7 @@ Click it to visit your live site!
 
 ## Part 9: Set Up Custom Domain (Optional)
 
-To use a custom domain like `luku.com`:
+To use a custom domain like `Alivella Boutique.com`:
 
 ### 9.1 Buy a Domain
 
@@ -479,7 +479,7 @@ You now have:
 ✅ Automatic deployments  
 ✅ Custom domain (optional)  
 
-Your Luku store is live on the internet!
+Your Alivella Boutique store is live on the internet!
 
 ---
 

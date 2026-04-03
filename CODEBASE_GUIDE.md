@@ -1,12 +1,12 @@
-# Luku Codebase Architecture Guide
+# Alivella Boutique Codebase Architecture Guide
 
-This guide explains how the Luku codebase is organized and how different parts work together.
+This guide explains how the Alivella Boutique codebase is organized and how different parts work together.
 
 ---
 
 ## Part 1: High-Level Architecture
 
-Luku uses a **full-stack architecture** with three main layers:
+Alivella Boutique uses a **full-stack architecture** with three main layers:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -656,7 +656,7 @@ export const list = publicProcedure.query(async () => {
 mysql -u root -p
 
 # View data
-USE luku;
+USE Alivella Boutique;
 SELECT * FROM products LIMIT 5;
 SELECT * FROM orders WHERE userId = 1;
 
@@ -700,4 +700,4 @@ const { data } = trpc.products.list.useQuery({}, {
 
 ---
 
-You now understand how Luku is built! Start with the local setup guide, then explore the codebase.
+You now understand how Alivella Boutique is built! Start with the local setup guide, then explore the codebase.
