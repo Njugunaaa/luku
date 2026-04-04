@@ -41,6 +41,7 @@ export default function ProductDetail() {
   const [wishlisted, setWishlisted] = useState(false);
 
   const { data: product, isLoading, error } = trpc.products.bySlug.useQuery({ slug }, { enabled: !!slug });
+  const { data: categories = [] } = trpc.categories.list.useQuery();
 
   const { data: relatedProducts } = trpc.products.list.useQuery(
     { categoryId: product?.categoryId, limit: 4 },
@@ -89,6 +90,7 @@ export default function ProductDetail() {
     try { return product.colors ? JSON.parse(product.colors) : []; }
     catch { return []; }
   })();
+  const category = categories.find((entry) => entry.id === product.categoryId);
 
   const discount = product.originalPrice
     ? Math.round((1 - parseFloat(product.price) / parseFloat(product.originalPrice)) * 100)
@@ -122,10 +124,14 @@ export default function ProductDetail() {
         <nav className="flex items-center gap-2 text-sm text-muted-foreground">
           <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
           <span>/</span>
-          <Link href={`/category/${product.categoryId}`} className="hover:text-foreground transition-colors">
-            Collection
-          </Link>
-          <span>/</span>
+          {category ? (
+            <>
+              <Link href={`/category/${category.slug}`} className="hover:text-foreground transition-colors">
+                {category.name}
+              </Link>
+              <span>/</span>
+            </>
+          ) : null}
           <span className="text-foreground font-medium truncate max-w-[200px]">{product.name}</span>
         </nav>
       </div>

@@ -210,9 +210,9 @@ export default function Admin() {
     yearlySummaryQuery.isLoading;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(244,114,182,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(251,113,133,0.1),transparent_24%)] bg-background">
-      <div className="mx-auto grid w-full max-w-[1600px] gap-6 px-4 py-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:px-6">
-        <aside className="rounded-[2rem] border border-border bg-card p-5 lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)]">
+    <div className="bg-[radial-gradient(circle_at_top_left,rgba(244,114,182,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(251,113,133,0.1),transparent_24%)] bg-background pb-10">
+      <div className="mx-auto grid w-full max-w-[1600px] items-start gap-6 px-4 py-8 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-6">
+        <aside className="rounded-[2rem] border border-border bg-card p-5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
           <p className="text-xs uppercase tracking-[0.28em] text-pink-500">Admin Ops</p>
           <h1 className="mt-3 text-3xl font-semibold text-foreground">Luku control room</h1>
           <p className="mt-3 text-sm text-muted-foreground">
@@ -255,7 +255,7 @@ export default function Admin() {
           </div>
         </aside>
 
-        <main className="space-y-6">
+        <main className="min-w-0 space-y-6">
           <header className="rounded-[2rem] border border-border bg-card p-6">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
               <div>

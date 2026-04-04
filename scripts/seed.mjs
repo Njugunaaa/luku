@@ -1,4 +1,3 @@
-import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
@@ -8,427 +7,831 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: join(__dirname, "../.env") });
 
 const DATABASE_URL = process.env.DATABASE_URL;
+
 if (!DATABASE_URL) {
-  console.error("DATABASE_URL not set");
+  console.error("DATABASE_URL is not set.");
   process.exit(1);
 }
 
-const connection = await mysql.createConnection(DATABASE_URL);
-const db = drizzle(connection);
-
-// ─── Categories ───────────────────────────────────────────────────────────────
 const CATEGORIES = [
-  { slug: "mens-collection", name: "Men's Collection", description: "Curated streetwear, casual fits, denim, sweaters, hoodies and more for the modern man.", gender: "men", sortOrder: 1, imageUrl: "https://images.unsplash.com/photo-1617137968427-85924c800a22?w=600&q=80" },
-  { slug: "womens-collection", name: "Women's Collection", description: "Stunning dresses, elegant tops, chic skirts, co-ords and everything in between.", gender: "women", sortOrder: 2, imageUrl: "https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=600&q=80" },
-  { slug: "shoes", name: "Shoes", description: "Sneakers, boots, heels, loafers — step out in style with our footwear collection.", gender: "unisex", sortOrder: 3, imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80" },
-  { slug: "accessories", name: "Accessories", description: "Hats, belts, bags, scarves, sunglasses — the details that define your look.", gender: "unisex", sortOrder: 4, imageUrl: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80" },
-  { slug: "official-wear", name: "Official Wear", description: "Men's suits, women's trouser suits, blazers, skirt suits — power dressing for every occasion.", gender: "unisex", sortOrder: 5, imageUrl: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&q=80" },
+  {
+    slug: "mens-collection",
+    name: "Men's Collection",
+    description:
+      "Curated thrift fits for Nairobi streets, campus hangs, office-casual days, and weekend outings.",
+    gender: "men",
+    sortOrder: 1,
+    imageUrl:
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&auto=format&fit=crop&q=80",
+  },
+  {
+    slug: "womens-collection",
+    name: "Women's Collection",
+    description:
+      "Easy dresses, smart separates, and polished thrift finds for brunch, work, church, and everyday style.",
+    gender: "women",
+    sortOrder: 2,
+    imageUrl:
+      "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=900&auto=format&fit=crop&q=80",
+  },
+  {
+    slug: "shoes",
+    name: "Shoes",
+    description:
+      "Sneakers, loafers, boots, and heels chosen for comfort, durability, and clean styling.",
+    gender: "unisex",
+    sortOrder: 3,
+    imageUrl:
+      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=900&auto=format&fit=crop&q=80",
+  },
+  {
+    slug: "accessories",
+    name: "Accessories",
+    description:
+      "Bags, belts, scarves, sunglasses, and jewelry that finish the look without overcomplicating it.",
+    gender: "unisex",
+    sortOrder: 4,
+    imageUrl:
+      "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=900&auto=format&fit=crop&q=80",
+  },
+  {
+    slug: "official-wear",
+    name: "Official Wear",
+    description:
+      "Tailored pieces for interviews, office days, events, and polished moments that matter.",
+    gender: "unisex",
+    sortOrder: 5,
+    imageUrl:
+      "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=900&auto=format&fit=crop&q=80",
+  },
 ];
 
-// Insert categories
-console.log("Seeding categories...");
-for (const cat of CATEGORIES) {
-  await connection.execute(
-    `INSERT INTO categories (slug, name, description, imageUrl, gender, sortOrder, createdAt)
-     VALUES (?, ?, ?, ?, ?, ?, NOW())
-     ON DUPLICATE KEY UPDATE name=VALUES(name), description=VALUES(description)`,
-    [cat.slug, cat.name, cat.description, cat.imageUrl, cat.gender, cat.sortOrder]
-  );
+function jsonArray(values) {
+  return JSON.stringify(values);
 }
-console.log("✓ Categories seeded");
 
-// Get category IDs
-const [catRows] = await connection.execute("SELECT id, slug FROM categories");
-const catMap = {};
-for (const row of catRows) catMap[row.slug] = row.id;
+function gallery(primary, secondary) {
+  return JSON.stringify([primary, secondary ?? primary]);
+}
 
-// ─── Products ─────────────────────────────────────────────────────────────────
 const PRODUCTS = [
-  // ── Men's Collection ──────────────────────────────────────────────────────
   {
-    slug: "vintage-levis-denim-jacket",
-    name: "Vintage Levi's Denim Jacket",
-    description: "Classic Levi's trucker jacket in medium wash denim. Excellent vintage productcondition with authentic fading. A timeless wardrobe staple.",
-    price: "2800", originalPrice: "4500",
+    slug: "nairobi-denim-trucker-jacket",
+    name: "Nairobi Denim Trucker Jacket",
+    description:
+      "A structured vintage-wash denim jacket that layers easily over tees and hoodies. Ideal for cool Nairobi mornings and late-evening plans.",
+    price: "2650",
+    originalPrice: "4200",
     category: "mens-collection",
-    imageUrl: "https://images.unsplash.com/photo-1576871337622-98d48d1cf531?w=600&q=80",
-    sizes: '["S","M","L","XL"]', colors: '["Medium Wash","Dark Wash"]',
-    brand: "Levi's", productcondition: "like_new", featured: true, isNew: false,
+    imageUrl:
+      "https://images.unsplash.com/photo-1542272604-787c3835535d?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1542272604-787c3835535d?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["M", "L", "XL"]),
+    colors: jsonArray(["Mid Blue", "Stone Wash"]),
+    brand: "Levi's",
+    productcondition: "like_new",
+    stockCount: 4,
+    featured: true,
+    isNew: true,
+    tags: jsonArray(["denim", "streetwear", "layering"]),
   },
   {
-    slug: "ralph-lauren-polo-shirt",
-    name: "Ralph Lauren Polo Shirt",
-    description: "Classic Ralph Lauren polo in navy blue. 100% cotton, slim fit. Perfect for casual or smart-casual occasions.",
-    price: "1800", originalPrice: "3200",
+    slug: "weekend-cuban-shirt",
+    name: "Weekend Cuban Collar Shirt",
+    description:
+      "A breezy patterned shirt for rooftop hangs, road trips, and easy weekend styling. Lightweight and relaxed without feeling sloppy.",
+    price: "1450",
+    originalPrice: "2300",
     category: "mens-collection",
-    imageUrl: "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&q=80",
-    sizes: '["S","M","L","XL","XXL"]', colors: '["Navy","White","Black"]',
-    brand: "Ralph Lauren", productcondition: "like_new", featured: true, isNew: true,
+    imageUrl:
+      "https://images.unsplash.com/photo-1603252109303-2751441dd157?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1603252109303-2751441dd157?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["S", "M", "L", "XL"]),
+    colors: jsonArray(["Olive Print", "Sand Print"]),
+    brand: "Cotton On",
+    productcondition: "good",
+    stockCount: 6,
+    featured: false,
+    isNew: true,
+    tags: jsonArray(["casual", "holiday", "men"]),
   },
   {
-    slug: "supreme-box-logo-hoodie",
-    name: "Supreme Box Logo Hoodie",
-    description: "Iconic Supreme box logo hoodie in black. Heavy cotton blend, kangaroo pocket. Streetwear essential.",
-    price: "5500", originalPrice: "8000",
+    slug: "utility-cargo-trousers",
+    name: "Utility Cargo Trousers",
+    description:
+      "Straight-leg cargo trousers with enough structure for daily wear and enough ease for campus, errands, or casual Friday fits.",
+    price: "1850",
+    originalPrice: "3200",
     category: "mens-collection",
-    imageUrl: "https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=600&q=80",
-    sizes: '["M","L","XL"]', colors: '["Black","Red","Grey"]',
-    brand: "Supreme", productcondition: "good", featured: true, isNew: false,
+    imageUrl:
+      "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["30", "32", "34", "36"]),
+    colors: jsonArray(["Khaki", "Olive", "Black"]),
+    brand: "LC Waikiki",
+    productcondition: "like_new",
+    stockCount: 5,
+    featured: true,
+    isNew: false,
+    tags: jsonArray(["cargo", "casual", "street style"]),
   },
   {
-    slug: "tommy-hilfiger-striped-tee",
-    name: "Tommy Hilfiger Striped Tee",
-    description: "Classic Tommy Hilfiger striped t-shirt. Lightweight cotton, relaxed fit. Great for everyday wear.",
-    price: "1200", originalPrice: "2000",
+    slug: "striped-rugby-sweatshirt",
+    name: "Striped Rugby Sweatshirt",
+    description:
+      "A thick cotton rugby sweatshirt with a clean athletic feel. Easy to wear with jeans, cargos, or shorts on cooler days.",
+    price: "1700",
+    originalPrice: "2900",
     category: "mens-collection",
-    imageUrl: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80",
-    sizes: '["S","M","L","XL"]', colors: '["Red/White/Blue","Navy/White"]',
-    brand: "Tommy Hilfiger", productcondition: "good", featured: false, isNew: true,
+    imageUrl:
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["M", "L", "XL"]),
+    colors: jsonArray(["Forest/Navy", "Cream/Navy"]),
+    brand: "Woolworths",
+    productcondition: "good",
+    stockCount: 3,
+    featured: false,
+    isNew: false,
+    tags: jsonArray(["sweatshirt", "preppy", "layering"]),
   },
   {
-    slug: "mens-slim-fit-chinos",
-    name: "Slim Fit Chino Trousers",
-    description: "Premium slim fit chinos in khaki. Stretch cotton blend for comfort. Versatile for office or casual wear.",
-    price: "1600", originalPrice: "2800",
+    slug: "black-carpenter-jeans",
+    name: "Black Carpenter Jeans",
+    description:
+      "Heavy denim with a relaxed fit and practical utility styling. Built for a stronger silhouette and everyday repeat wear.",
+    price: "2100",
+    originalPrice: "3600",
     category: "mens-collection",
-    imageUrl: "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=600&q=80",
-    sizes: '["28","30","32","34","36"]', colors: '["Khaki","Navy","Olive"]',
-    brand: "Zara", productcondition: "like_new", featured: false, isNew: false,
+    imageUrl:
+      "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["30", "32", "34", "36", "38"]),
+    colors: jsonArray(["Washed Black"]),
+    brand: "Pull&Bear",
+    productcondition: "like_new",
+    stockCount: 4,
+    featured: true,
+    isNew: true,
+    tags: jsonArray(["denim", "black jeans", "streetwear"]),
   },
   {
-    slug: "adidas-track-jacket",
-    name: "Adidas Originals Track Jacket",
-    description: "Retro Adidas track jacket with iconic three stripes. Lightweight, perfect for layering.",
-    price: "2200", originalPrice: "3800",
-    category: "mens-collection",
-    imageUrl: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600&q=80",
-    sizes: '["S","M","L","XL"]', colors: '["Black/Gold","Navy/White"]',
-    brand: "Adidas", productcondition: "like_new", featured: true, isNew: false,
-  },
-  {
-    slug: "mens-cable-knit-sweater",
-    name: "Cable Knit Crew Neck Sweater",
-    description: "Cozy cable knit sweater in cream. 100% wool blend. Perfect for the cool season.",
-    price: "2000", originalPrice: "3500",
-    category: "mens-collection",
-    imageUrl: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=600&q=80",
-    sizes: '["S","M","L","XL"]', colors: '["Cream","Grey","Camel"]',
-    brand: "H&M", productcondition: "new", featured: false, isNew: true,
-  },
-  {
-    slug: "mens-graphic-tee-pack",
-    name: "Vintage Graphic Tee",
-    description: "Cool vintage-style graphic tee with distressed print. 100% cotton, oversized fit.",
-    price: "900", originalPrice: "1500",
-    category: "mens-collection",
-    imageUrl: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=600&q=80",
-    sizes: '["S","M","L","XL","XXL"]', colors: '["White","Black","Grey"]',
-    brand: null, productcondition: "good", featured: false, isNew: false,
-  },
-
-  // ── Women's Collection ────────────────────────────────────────────────────
-  {
-    slug: "floral-midi-dress",
-    name: "Floral Midi Wrap Dress",
-    description: "Gorgeous floral print midi dress with wrap silhouette. Lightweight chiffon fabric, perfect for any occasion.",
-    price: "2200", originalPrice: "4000",
+    slug: "soft-knit-cardigan-set",
+    name: "Soft Knit Cardigan Set",
+    description:
+      "A refined cardigan-and-cami pairing that works for office layering, brunch, and soft weekend dressing without trying too hard.",
+    price: "2250",
+    originalPrice: "3800",
     category: "womens-collection",
-    imageUrl: "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=600&q=80",
-    sizes: '["XS","S","M","L","XL"]', colors: '["Floral Blue","Floral Pink"]',
-    brand: "Zara", productcondition: "like_new", featured: true, isNew: true,
+    imageUrl:
+      "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["S", "M", "L"]),
+    colors: jsonArray(["Rose", "Oatmeal", "Charcoal"]),
+    brand: "Mango",
+    productcondition: "like_new",
+    stockCount: 5,
+    featured: true,
+    isNew: true,
+    tags: jsonArray(["knitwear", "layering", "women"]),
   },
   {
-    slug: "womens-denim-mini-skirt",
-    name: "Denim Mini Skirt",
-    description: "Classic denim mini skirt with raw hem. High-waisted, A-line silhouette. A wardrobe essential.",
-    price: "1400", originalPrice: "2500",
+    slug: "floral-tea-midi-dress",
+    name: "Floral Tea Midi Dress",
+    description:
+      "A flattering midi dress with a light floral print and easy movement. Perfect for day events, Sunday plans, or dressy casual wear.",
+    price: "2400",
+    originalPrice: "4200",
     category: "womens-collection",
-    imageUrl: "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=600&q=80",
-    sizes: '["XS","S","M","L"]', colors: '["Light Wash","Dark Wash"]',
-    brand: "H&M", productcondition: "good", featured: true, isNew: false,
+    imageUrl:
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["S", "M", "L", "XL"]),
+    colors: jsonArray(["Pink Floral", "Navy Floral"]),
+    brand: "River Island",
+    productcondition: "like_new",
+    stockCount: 6,
+    featured: true,
+    isNew: true,
+    tags: jsonArray(["dress", "floral", "occasion wear"]),
   },
   {
-    slug: "silk-slip-dress",
-    name: "Satin Slip Dress",
-    description: "Elegant satin slip dress in champagne. Adjustable straps, bias cut. Perfect for evenings out.",
-    price: "3200", originalPrice: "5500",
+    slug: "washed-denim-maxi-skirt",
+    name: "Washed Denim Maxi Skirt",
+    description:
+      "A clean high-waist denim skirt with a longline shape that works beautifully with crop tops, knits, and tucked shirts.",
+    price: "1750",
+    originalPrice: "3000",
     category: "womens-collection",
-    imageUrl: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&q=80",
-    sizes: '["XS","S","M","L"]', colors: '["Champagne","Black","Dusty Rose"]',
-    brand: "ASOS", productcondition: "like_new", featured: true, isNew: true,
+    imageUrl:
+      "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["8", "10", "12", "14"]),
+    colors: jsonArray(["Blue Wash", "Black Wash"]),
+    brand: "Mr Price",
+    productcondition: "good",
+    stockCount: 5,
+    featured: false,
+    isNew: false,
+    tags: jsonArray(["denim skirt", "casual", "street style"]),
   },
   {
-    slug: "oversized-blazer-women",
-    name: "Oversized Blazer",
-    description: "Chic oversized blazer in camel. Single button closure, structured shoulders. Dress up or down.",
-    price: "3500", originalPrice: "6000",
+    slug: "pleated-work-midi-skirt",
+    name: "Pleated Work Midi Skirt",
+    description:
+      "A polished pleated midi that moves well and styles easily for office days, events, and dressed-up errands.",
+    price: "1600",
+    originalPrice: "2750",
     category: "womens-collection",
-    imageUrl: "https://images.unsplash.com/photo-1548549557-dbe9155b3a97?w=600&q=80",
-    sizes: '["XS","S","M","L","XL"]', colors: '["Camel","Black","Cream"]',
-    brand: "Zara", productcondition: "like_new", featured: false, isNew: false,
+    imageUrl:
+      "https://images.unsplash.com/photo-1554412933-514a83d2f3c8?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1554412933-514a83d2f3c8?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["8", "10", "12", "14", "16"]),
+    colors: jsonArray(["Chocolate", "Black", "Olive"]),
+    brand: "Foschini",
+    productcondition: "like_new",
+    stockCount: 4,
+    featured: false,
+    isNew: true,
+    tags: jsonArray(["office", "midi skirt", "smart casual"]),
   },
   {
-    slug: "womens-high-waist-jeans",
-    name: "High Waist Straight Leg Jeans",
-    description: "Classic high-waist straight leg jeans in dark wash. Flattering fit, comfortable stretch denim.",
-    price: "2000", originalPrice: "3500",
+    slug: "satin-tie-neck-blouse",
+    name: "Satin Tie-Neck Blouse",
+    description:
+      "A smooth blouse with just enough shine for work and evening wear. The neckline detail makes it feel elevated without being loud.",
+    price: "1500",
+    originalPrice: "2600",
     category: "womens-collection",
-    imageUrl: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=600&q=80",
-    sizes: '["24","26","28","30","32"]', colors: '["Dark Wash","Light Wash","Black"]',
-    brand: "Mango", productcondition: "good", featured: false, isNew: true,
+    imageUrl:
+      "https://images.unsplash.com/photo-1551232864-3f0890e580d9?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1551232864-3f0890e580d9?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["S", "M", "L", "XL"]),
+    colors: jsonArray(["Champagne", "Wine", "Ivory"]),
+    brand: "Zara",
+    productcondition: "like_new",
+    stockCount: 7,
+    featured: true,
+    isNew: false,
+    tags: jsonArray(["blouse", "office wear", "smart"]),
   },
   {
-    slug: "womens-knit-sweater",
-    name: "Chunky Knit Oversized Sweater",
-    description: "Super cozy chunky knit sweater in sage green. Oversized fit, ribbed cuffs and hem.",
-    price: "1800", originalPrice: "3200",
+    slug: "wide-leg-palazzo-trousers",
+    name: "Wide-Leg Palazzo Trousers",
+    description:
+      "Tailored enough for work, relaxed enough for everyday wear. A strong base piece for building clean, modern outfits.",
+    price: "1900",
+    originalPrice: "3200",
     category: "womens-collection",
-    imageUrl: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&q=80",
-    sizes: '["XS","S","M","L","XL"]', colors: '["Sage Green","Cream","Rust"]',
-    brand: "Uniqlo", productcondition: "new", featured: true, isNew: true,
+    imageUrl:
+      "https://images.unsplash.com/photo-1506629905607-d405b7a31a94?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1506629905607-d405b7a31a94?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["8", "10", "12", "14"]),
+    colors: jsonArray(["Stone", "Black", "Navy"]),
+    brand: "Woolworths",
+    productcondition: "new",
+    stockCount: 6,
+    featured: false,
+    isNew: true,
+    tags: jsonArray(["trousers", "palazzo", "workwear"]),
   },
   {
-    slug: "bodycon-evening-dress",
-    name: "Bodycon Evening Dress",
-    description: "Stunning bodycon dress in deep burgundy. Ruched sides, midi length. Perfect for nights out.",
-    price: "2800", originalPrice: "4800",
-    category: "womens-collection",
-    imageUrl: "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=600&q=80",
-    sizes: '["XS","S","M","L"]', colors: '["Burgundy","Black","Emerald"]',
-    brand: "ASOS", productcondition: "like_new", featured: false, isNew: false,
-  },
-  {
-    slug: "linen-wide-leg-trousers",
-    name: "Linen Wide Leg Trousers",
-    description: "Breezy linen wide leg trousers in white. High-waisted, relaxed fit. Summer essential.",
-    price: "1600", originalPrice: "2800",
-    category: "womens-collection",
-    imageUrl: "https://images.unsplash.com/photo-1594938298603-c8148c4b4a0e?w=600&q=80",
-    sizes: '["XS","S","M","L","XL"]', colors: '["White","Beige","Black"]',
-    brand: "Zara", productcondition: "good", featured: false, isNew: false,
-  },
-
-  // ── Shoes ─────────────────────────────────────────────────────────────────
-  {
-    slug: "nike-air-max-90",
-    name: "Nike Air Max 90",
-    description: "Iconic Nike Air Max 90 in white/black. Barely worn, excellent productcondition. Classic silhouette that never goes out of style.",
-    price: "4500", originalPrice: "8000",
+    slug: "court-vision-sneakers",
+    name: "Court Vision Sneakers",
+    description:
+      "Clean everyday sneakers with the kind of shape that works with denim, dresses, cargos, and relaxed office looks.",
+    price: "4200",
+    originalPrice: "6800",
     category: "shoes",
-    imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80",
-    sizes: '["39","40","41","42","43","44"]', colors: '["White/Black","Grey/Red"]',
-    brand: "Nike", productcondition: "like_new", featured: true, isNew: false,
+    imageUrl:
+      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["38", "39", "40", "41", "42", "43"]),
+    colors: jsonArray(["White/Black", "White/Gum"]),
+    brand: "Nike",
+    productcondition: "like_new",
+    stockCount: 3,
+    featured: true,
+    isNew: false,
+    tags: jsonArray(["sneakers", "unisex", "daily wear"]),
   },
   {
-    slug: "chelsea-leather-boots",
-    name: "Chelsea Leather Boots",
-    description: "Premium leather Chelsea boots in tan. Elastic side panels, stacked heel. Timeless and versatile.",
-    price: "5500", originalPrice: "9000",
+    slug: "retro-runner-sneakers",
+    name: "Retro Runner Sneakers",
+    description:
+      "Comfortable retro runners with a softer sole and easy styling. Great for long days in town or on the move.",
+    price: "3600",
+    originalPrice: "5800",
     category: "shoes",
-    imageUrl: "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=600&q=80",
-    sizes: '["37","38","39","40","41","42"]', colors: '["Tan","Black","Dark Brown"]',
-    brand: "Clarks", productcondition: "like_new", featured: true, isNew: false,
+    imageUrl:
+      "https://images.unsplash.com/photo-1543508282-6319a3e2621f?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1543508282-6319a3e2621f?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["37", "38", "39", "40", "41", "42"]),
+    colors: jsonArray(["Grey", "Cream", "Rose"]),
+    brand: "New Balance",
+    productcondition: "good",
+    stockCount: 4,
+    featured: true,
+    isNew: true,
+    tags: jsonArray(["retro", "comfort", "trainers"]),
   },
   {
-    slug: "adidas-stan-smith",
-    name: "Adidas Stan Smith Sneakers",
-    description: "Classic Adidas Stan Smith in white/green. Clean, minimal design. Perfect for any casual outfit.",
-    price: "3200", originalPrice: "5500",
+    slug: "polished-leather-loafers",
+    name: "Polished Leather Loafers",
+    description:
+      "Smart loafers that bridge official wear and everyday polish. A dependable pair for office, meetings, and dressed-up casual looks.",
+    price: "3900",
+    originalPrice: "6200",
     category: "shoes",
-    imageUrl: "https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=600&q=80",
-    sizes: '["38","39","40","41","42","43"]', colors: '["White/Green","White/Navy"]',
-    brand: "Adidas", productcondition: "good", featured: true, isNew: true,
+    imageUrl:
+      "https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["39", "40", "41", "42", "43", "44"]),
+    colors: jsonArray(["Black", "Oxblood"]),
+    brand: "Bata",
+    productcondition: "like_new",
+    stockCount: 5,
+    featured: false,
+    isNew: false,
+    tags: jsonArray(["loafers", "formal", "office"]),
   },
   {
-    slug: "block-heel-pumps",
-    name: "Block Heel Pumps",
-    description: "Elegant block heel pumps in nude. Pointed toe, 7cm heel. Perfect for office or evening wear.",
-    price: "2800", originalPrice: "4500",
+    slug: "block-heel-ankle-boots",
+    name: "Block Heel Ankle Boots",
+    description:
+      "Structured ankle boots with a practical heel and a polished finish. Easy to style with dresses, trousers, and denim.",
+    price: "3400",
+    originalPrice: "5600",
     category: "shoes",
-    imageUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=600&q=80",
-    sizes: '["36","37","38","39","40"]', colors: '["Nude","Black","Red"]',
-    brand: "Aldo", productcondition: "like_new", featured: false, isNew: true,
+    imageUrl:
+      "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["36", "37", "38", "39", "40"]),
+    colors: jsonArray(["Black", "Tan"]),
+    brand: "Aldo",
+    productcondition: "good",
+    stockCount: 3,
+    featured: true,
+    isNew: false,
+    tags: jsonArray(["boots", "heels", "smart casual"]),
   },
   {
-    slug: "timberland-boots",
-    name: "Timberland 6-Inch Premium Boots",
-    description: "Iconic Timberland wheat nubuck boots. Waterproof, padded collar. A streetwear staple.",
-    price: "6500", originalPrice: "12000",
+    slug: "pointed-court-heels",
+    name: "Pointed Court Heels",
+    description:
+      "Classic heels for events, office dressing, and occasions where you need a cleaner finish without overdoing it.",
+    price: "2900",
+    originalPrice: "4700",
     category: "shoes",
-    imageUrl: "https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=600&q=80",
-    sizes: '["40","41","42","43","44","45"]', colors: '["Wheat","Black","Dark Brown"]',
-    brand: "Timberland", productcondition: "good", featured: true, isNew: false,
+    imageUrl:
+      "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1445205170230-053b83016050?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["36", "37", "38", "39", "40"]),
+    colors: jsonArray(["Nude", "Black", "Wine"]),
+    brand: "Charles & Keith",
+    productcondition: "like_new",
+    stockCount: 4,
+    featured: false,
+    isNew: true,
+    tags: jsonArray(["heels", "occasion", "women"]),
   },
   {
-    slug: "white-canvas-sneakers",
-    name: "Classic White Canvas Sneakers",
-    description: "Clean white canvas low-top sneakers. Rubber sole, lace-up closure. Effortlessly cool.",
-    price: "1800", originalPrice: "3000",
-    category: "shoes",
-    imageUrl: "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=600&q=80",
-    sizes: '["36","37","38","39","40","41","42"]', colors: '["White","Black","Cream"]',
-    brand: "Converse", productcondition: "good", featured: false, isNew: false,
-  },
-
-  // ── Accessories ───────────────────────────────────────────────────────────
-  {
-    slug: "bucket-hat-beige",
-    name: "Bucket Hat",
-    description: "Trendy bucket hat in beige cotton. Unstructured, packable. Perfect for sunny days.",
-    price: "800", originalPrice: "1500",
+    slug: "structured-city-tote",
+    name: "Structured City Tote",
+    description:
+      "A roomy tote for work, meetings, and moving around town with the essentials. Clean lines and a refined finish.",
+    price: "2450",
+    originalPrice: "3900",
     category: "accessories",
-    imageUrl: "https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600&q=80",
-    sizes: '["One Size"]', colors: '["Beige","Black","Olive","Pink"]',
-    brand: null, productcondition: "new", featured: true, isNew: true,
+    imageUrl:
+      "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["One Size"]),
+    colors: jsonArray(["Black", "Tan", "Chocolate"]),
+    brand: "Fossil",
+    productcondition: "like_new",
+    stockCount: 5,
+    featured: true,
+    isNew: false,
+    tags: jsonArray(["bag", "tote", "workwear"]),
   },
   {
-    slug: "leather-belt-brown",
-    name: "Genuine Leather Belt",
-    description: "Classic genuine leather belt in tan. Silver buckle, 3.5cm width. Fits waist 28-38 inches.",
-    price: "1200", originalPrice: "2000",
+    slug: "mini-crossbody-sling",
+    name: "Mini Crossbody Sling",
+    description:
+      "Compact and practical with enough room for a phone, keys, cards, and gloss. Perfect for quick errands and weekend looks.",
+    price: "1650",
+    originalPrice: "2800",
     category: "accessories",
-    imageUrl: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80",
-    sizes: '["S/M","M/L","L/XL"]', colors: '["Tan","Black","Dark Brown"]',
-    brand: null, productcondition: "new", featured: false, isNew: false,
+    imageUrl:
+      "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["One Size"]),
+    colors: jsonArray(["Black", "Olive", "Stone"]),
+    brand: "Aldo",
+    productcondition: "good",
+    stockCount: 6,
+    featured: false,
+    isNew: true,
+    tags: jsonArray(["crossbody", "bag", "daily"]),
   },
   {
-    slug: "crossbody-bag-black",
-    name: "Leather Crossbody Bag",
-    description: "Compact leather crossbody bag in black. Adjustable strap, multiple compartments. Everyday essential.",
-    price: "2500", originalPrice: "4500",
+    slug: "maasai-inspired-beaded-necklace",
+    name: "Maasai-Inspired Beaded Necklace",
+    description:
+      "A bold beaded statement piece that brings color and personality to plain dresses, shirts, and event looks.",
+    price: "1100",
+    originalPrice: "1800",
     category: "accessories",
-    imageUrl: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&q=80",
-    sizes: '["One Size"]', colors: '["Black","Tan","Burgundy"]',
-    brand: "Fossil", productcondition: "like_new", featured: true, isNew: false,
+    imageUrl:
+      "https://images.unsplash.com/photo-1617038220319-276d3cfab638?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1617038220319-276d3cfab638?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["One Size"]),
+    colors: jsonArray(["Red Mix", "Blue Mix", "Neutral Mix"]),
+    brand: "Artisan Market",
+    productcondition: "new",
+    stockCount: 7,
+    featured: true,
+    isNew: true,
+    tags: jsonArray(["jewelry", "beaded", "statement"]),
   },
   {
-    slug: "snapback-cap",
-    name: "Snapback Cap",
-    description: "Classic snapback cap with embroidered logo. Adjustable closure, flat brim. Street style essential.",
-    price: "900", originalPrice: "1600",
+    slug: "layered-gold-hoop-set",
+    name: "Layered Gold Hoop Set",
+    description:
+      "A versatile earring set with easy shine for both daily styling and dressier occasions. Light enough to wear all day.",
+    price: "900",
+    originalPrice: "1500",
     category: "accessories",
-    imageUrl: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80",
-    sizes: '["One Size"]', colors: '["Black","White","Navy","Red"]',
-    brand: null, productcondition: "new", featured: false, isNew: true,
+    imageUrl:
+      "https://images.unsplash.com/photo-1617038220319-276d3cfab638?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1617038220319-276d3cfab638?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["One Size"]),
+    colors: jsonArray(["Gold"]),
+    brand: "Accessorize",
+    productcondition: "new",
+    stockCount: 8,
+    featured: false,
+    isNew: true,
+    tags: jsonArray(["earrings", "jewelry", "gold"]),
   },
   {
-    slug: "silk-scarf",
-    name: "Silk Print Scarf",
-    description: "Luxurious silk scarf with abstract print. Can be worn as headscarf, neck scarf, or bag accessory.",
-    price: "1500", originalPrice: "2800",
+    slug: "vintage-leather-belt",
+    name: "Vintage Leather Belt",
+    description:
+      "A dependable real-leather belt that works with denim, tailored trousers, and oversized shirt styling.",
+    price: "950",
+    originalPrice: "1600",
     category: "accessories",
-    imageUrl: "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=600&q=80",
-    sizes: '["One Size"]', colors: '["Multicolor","Blue","Pink"]',
-    brand: null, productcondition: "new", featured: false, isNew: true,
+    imageUrl:
+      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["S/M", "M/L", "L/XL"]),
+    colors: jsonArray(["Tan", "Black"]),
+    brand: "Handpicked",
+    productcondition: "good",
+    stockCount: 6,
+    featured: false,
+    isNew: false,
+    tags: jsonArray(["belt", "leather", "unisex"]),
   },
   {
-    slug: "aviator-sunglasses",
-    name: "Aviator Sunglasses",
-    description: "Classic aviator sunglasses with gold frame and brown gradient lenses. UV400 protection.",
-    price: "1800", originalPrice: "3500",
+    slug: "printed-silk-head-wrap",
+    name: "Printed Silk Head Wrap",
+    description:
+      "A lightweight scarf for hair styling, neck styling, or adding character to bags and simple outfits.",
+    price: "850",
+    originalPrice: "1400",
     category: "accessories",
-    imageUrl: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=600&q=80",
-    sizes: '["One Size"]', colors: '["Gold/Brown","Silver/Grey","Black/Black"]',
-    brand: "Ray-Ban", productcondition: "like_new", featured: true, isNew: false,
+    imageUrl:
+      "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["One Size"]),
+    colors: jsonArray(["Rose Print", "Blue Print", "Terracotta Print"]),
+    brand: "Market Find",
+    productcondition: "new",
+    stockCount: 9,
+    featured: true,
+    isNew: true,
+    tags: jsonArray(["scarf", "head wrap", "accessory"]),
   },
   {
-    slug: "canvas-tote-bag",
-    name: "Canvas Tote Bag",
-    description: "Large canvas tote bag with leather handles. Perfect for shopping, beach, or everyday use.",
-    price: "1100", originalPrice: "2000",
+    slug: "oval-tinted-sunglasses",
+    name: "Oval Tinted Sunglasses",
+    description:
+      "Clean vintage-inspired sunglasses that sharpen a simple look fast. A strong finishing piece without taking over.",
+    price: "1250",
+    originalPrice: "2000",
     category: "accessories",
-    imageUrl: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=600&q=80",
-    sizes: '["One Size"]', colors: '["Natural","Black","Navy"]',
-    brand: null, productcondition: "new", featured: false, isNew: false,
+    imageUrl:
+      "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["One Size"]),
+    colors: jsonArray(["Black", "Amber", "Smoke"]),
+    brand: "Ray-Ban",
+    productcondition: "like_new",
+    stockCount: 5,
+    featured: false,
+    isNew: false,
+    tags: jsonArray(["sunglasses", "eyewear", "unisex"]),
   },
-
-  // ── Official Wear ─────────────────────────────────────────────────────────
   {
-    slug: "mens-navy-suit",
-    name: "Men's Navy Blue Suit",
-    description: "Sharp two-piece navy blue suit. Slim fit, notch lapel. Perfect for interviews, weddings, and formal events. Jacket + Trousers.",
-    price: "8500", originalPrice: "15000",
+    slug: "navy-interview-suit",
+    name: "Navy Interview Suit",
+    description:
+      "A sharp two-piece suit that feels right for interviews, weddings, and important work presentations. Clean fit and strong structure.",
+    price: "8600",
+    originalPrice: "14500",
     category: "official-wear",
-    imageUrl: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&q=80",
-    sizes: '["38","40","42","44","46"]', colors: '["Navy","Charcoal","Black"]',
-    brand: "Next", productcondition: "like_new", featured: true, isNew: false,
+    imageUrl:
+      "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1594938298603-c8148c4b4a0e?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["38", "40", "42", "44", "46"]),
+    colors: jsonArray(["Navy", "Charcoal"]),
+    brand: "Next",
+    productcondition: "like_new",
+    stockCount: 2,
+    featured: true,
+    isNew: false,
+    tags: jsonArray(["suit", "formal", "men"]),
   },
   {
-    slug: "womens-trouser-suit",
-    name: "Women's Trouser Suit",
-    description: "Elegant women's trouser suit in charcoal grey. Tailored blazer + high-waist trousers. Power dressing at its finest.",
-    price: "7500", originalPrice: "13000",
+    slug: "women-power-blazer-set",
+    name: "Women's Power Blazer Set",
+    description:
+      "A tailored blazer and trouser pairing with enough polish for office leadership, events, and smarter formal styling.",
+    price: "7200",
+    originalPrice: "12500",
     category: "official-wear",
-    imageUrl: "https://images.unsplash.com/photo-1594938298603-c8148c4b4a0e?w=600&q=80",
-    sizes: '["XS","S","M","L","XL"]', colors: '["Charcoal","Black","Cream"]',
-    brand: "Zara", productcondition: "like_new", featured: true, isNew: true,
+    imageUrl:
+      "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["S", "M", "L", "XL"]),
+    colors: jsonArray(["Stone", "Black", "Dusty Pink"]),
+    brand: "Zara",
+    productcondition: "like_new",
+    stockCount: 3,
+    featured: true,
+    isNew: true,
+    tags: jsonArray(["blazer set", "formal", "women"]),
   },
   {
-    slug: "womens-skirt-suit",
-    name: "Women's Skirt Suit",
-    description: "Classic women's skirt suit in black. Structured blazer + pencil skirt. Timeless professional look.",
-    price: "6800", originalPrice: "12000",
+    slug: "crisp-office-poplin-shirt",
+    name: "Crisp Office Poplin Shirt",
+    description:
+      "A clean structured shirt for work wardrobes, formal layering, and polished styling across both men's and women's looks.",
+    price: "1350",
+    originalPrice: "2200",
     category: "official-wear",
-    imageUrl: "https://images.unsplash.com/photo-1548549557-dbe9155b3a97?w=600&q=80",
-    sizes: '["XS","S","M","L"]', colors: '["Black","Navy","Burgundy"]',
-    brand: "Marks & Spencer", productcondition: "like_new", featured: true, isNew: false,
+    imageUrl:
+      "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1551232864-3f0890e580d9?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["S", "M", "L", "XL", "XXL"]),
+    colors: jsonArray(["White", "Sky Blue", "Pinstripe"]),
+    brand: "Marks & Spencer",
+    productcondition: "like_new",
+    stockCount: 7,
+    featured: false,
+    isNew: false,
+    tags: jsonArray(["shirt", "office", "formal"]),
   },
   {
-    slug: "mens-charcoal-suit",
-    name: "Men's Charcoal Grey Suit",
-    description: "Classic charcoal grey two-piece suit. Regular fit, single-breasted. Versatile for any formal occasion.",
-    price: "9000", originalPrice: "16000",
+    slug: "sheath-office-midi-dress",
+    name: "Sheath Office Midi Dress",
+    description:
+      "A streamlined midi dress with a neat shape for professional settings, formal lunches, and elegant weekday dressing.",
+    price: "3300",
+    originalPrice: "5400",
     category: "official-wear",
-    imageUrl: "https://images.unsplash.com/photo-1594938298603-c8148c4b4a0e?w=600&q=80",
-    sizes: '["38","40","42","44","46","48"]', colors: '["Charcoal","Dark Grey"]',
-    brand: "Marks & Spencer", productcondition: "good", featured: false, isNew: false,
+    imageUrl:
+      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["S", "M", "L", "XL"]),
+    colors: jsonArray(["Black", "Navy", "Forest"]),
+    brand: "Woolworths",
+    productcondition: "good",
+    stockCount: 4,
+    featured: false,
+    isNew: true,
+    tags: jsonArray(["dress", "office", "formal"]),
   },
   {
-    slug: "mens-dress-shirt-white",
-    name: "Men's Dress Shirt",
-    description: "Crisp white dress shirt in 100% cotton. Slim fit, spread collar. Essential for any formal wardrobe.",
-    price: "1500", originalPrice: "2800",
+    slug: "charcoal-tailored-blazer",
+    name: "Charcoal Tailored Blazer",
+    description:
+      "A versatile single-breasted blazer that sharpens denim, trousers, dresses, and coordinated work sets with minimal effort.",
+    price: "4100",
+    originalPrice: "6900",
     category: "official-wear",
-    imageUrl: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&q=80",
-    sizes: '["S","M","L","XL","XXL"]', colors: '["White","Light Blue","Striped"]',
-    brand: "Calvin Klein", productcondition: "like_new", featured: false, isNew: true,
-  },
-  {
-    slug: "womens-blazer-cream",
-    name: "Women's Structured Blazer",
-    description: "Chic structured blazer in cream. Single button, padded shoulders. Elevate any outfit instantly.",
-    price: "4500", originalPrice: "8000",
-    category: "official-wear",
-    imageUrl: "https://images.unsplash.com/photo-1548549557-dbe9155b3a97?w=600&q=80",
-    sizes: '["XS","S","M","L","XL"]', colors: '["Cream","Black","Camel"]',
-    brand: "Zara", productcondition: "like_new", featured: false, isNew: true,
+    imageUrl:
+      "https://images.unsplash.com/photo-1548549557-dbe9155b3a97?w=900&auto=format&fit=crop&q=80",
+    images: gallery(
+      "https://images.unsplash.com/photo-1548549557-dbe9155b3a97?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=900&auto=format&fit=crop&q=80",
+    ),
+    sizes: jsonArray(["S", "M", "L", "XL"]),
+    colors: jsonArray(["Charcoal", "Camel", "Black"]),
+    brand: "Mango",
+    productcondition: "like_new",
+    stockCount: 5,
+    featured: true,
+    isNew: false,
+    tags: jsonArray(["blazer", "office", "tailoring"]),
   },
 ];
 
-console.log("Seeding products...");
-let inserted = 0;
-let skipped = 0;
-
-for (const p of PRODUCTS) {
-  const catId = catMap[p.category];
-  if (!catId) { console.warn(`Category not found: ${p.category}`); continue; }
+async function seed() {
+  const connection = await mysql.createConnection(DATABASE_URL);
 
   try {
-    await connection.execute(
-      `INSERT INTO products (slug, name, description, price, originalPrice, categoryId, imageUrl, sizes, colors, brand, productcondition, inStock, stockCount, featured, isNew, createdAt, updatedAt)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 5, ?, ?, NOW(), NOW())
-       ON DUPLICATE KEY UPDATE name=VALUES(name), price=VALUES(price)`,
-      [p.slug, p.name, p.description, p.price, p.originalPrice || null, catId, p.imageUrl,
-       p.sizes || null, p.colors || null, p.brand || null, p.productcondition || "like_new",
-       p.featured ? 1 : 0, p.isNew ? 1 : 0]
+    console.log("Seeding categories...");
+
+    for (const category of CATEGORIES) {
+      await connection.execute(
+        `INSERT INTO categories (slug, name, description, imageUrl, gender, sortOrder, createdAt)
+         VALUES (?, ?, ?, ?, ?, ?, NOW())
+         ON DUPLICATE KEY UPDATE
+           name = VALUES(name),
+           description = VALUES(description),
+           imageUrl = VALUES(imageUrl),
+           gender = VALUES(gender),
+           sortOrder = VALUES(sortOrder)`,
+        [
+          category.slug,
+          category.name,
+          category.description,
+          category.imageUrl,
+          category.gender,
+          category.sortOrder,
+        ],
+      );
+    }
+
+    const [categoryRows] = await connection.execute("SELECT id, slug FROM categories");
+    const categoryMap = new Map(categoryRows.map((row) => [row.slug, row.id]));
+
+    console.log(`Seeded ${CATEGORIES.length} categories.`);
+    console.log("Seeding products...");
+
+    let seededCount = 0;
+
+    for (const product of PRODUCTS) {
+      const categoryId = categoryMap.get(product.category);
+
+      if (!categoryId) {
+        console.warn(`Skipping ${product.slug}: category ${product.category} was not found.`);
+        continue;
+      }
+
+      await connection.execute(
+        `INSERT INTO products (
+          slug, name, description, price, originalPrice, categoryId, imageUrl, images,
+          sizes, colors, brand, productcondition, inStock, stockCount, featured, isNew,
+          tags, createdAt, updatedAt
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        ON DUPLICATE KEY UPDATE
+          name = VALUES(name),
+          description = VALUES(description),
+          price = VALUES(price),
+          originalPrice = VALUES(originalPrice),
+          categoryId = VALUES(categoryId),
+          imageUrl = VALUES(imageUrl),
+          images = VALUES(images),
+          sizes = VALUES(sizes),
+          colors = VALUES(colors),
+          brand = VALUES(brand),
+          productcondition = VALUES(productcondition),
+          inStock = VALUES(inStock),
+          stockCount = VALUES(stockCount),
+          featured = VALUES(featured),
+          isNew = VALUES(isNew),
+          tags = VALUES(tags),
+          updatedAt = NOW()`,
+        [
+          product.slug,
+          product.name,
+          product.description,
+          product.price,
+          product.originalPrice,
+          categoryId,
+          product.imageUrl,
+          product.images,
+          product.sizes,
+          product.colors,
+          product.brand,
+          product.productcondition,
+          1,
+          product.stockCount,
+          product.featured ? 1 : 0,
+          product.isNew ? 1 : 0,
+          product.tags,
+        ],
+      );
+
+      seededCount += 1;
+    }
+
+    const [counts] = await connection.execute(
+      `SELECT
+         (SELECT COUNT(*) FROM categories) AS categoryCount,
+         (SELECT COUNT(*) FROM products) AS productCount`,
     );
-    inserted++;
-  } catch (err) {
-    console.warn(`Skipped ${p.slug}: ${err.message}`);
-    skipped++;
+
+    const summary = counts[0];
+
+    console.log(`Seeded ${seededCount} products.`);
+    console.log(
+      `Database now has ${summary.categoryCount} categories and ${summary.productCount} products.`,
+    );
+    console.log("Catalog seed complete.");
+  } finally {
+    await connection.end();
   }
 }
 
-console.log(`✓ Products seeded: ${inserted} inserted, ${skipped} skipped`);
-await connection.end();
-console.log("\n✅ Seed complete!");
+seed().catch((error) => {
+  console.error("Catalog seed failed:", error);
+  process.exit(1);
+});

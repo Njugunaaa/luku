@@ -15,6 +15,7 @@ import Category from "./pages/Category";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import Account from "./pages/Account";
 import AccountOrders from "./pages/AccountOrders";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -68,6 +69,13 @@ function Router() {
         <Layout>
           <ProtectedRoute>
             <AccountOrders />
+          </ProtectedRoute>
+        </Layout>
+      )} />
+      <Route path="/account" component={() => (
+        <Layout>
+          <ProtectedRoute>
+            <Account />
           </ProtectedRoute>
         </Layout>
       )} />
