@@ -1,7 +1,17 @@
-import { createApp } from "../server/_core/app";
+let cachedApp: ((req: any, res: any) => unknown) | null = null;
 
-const app = createApp();
+export default async function handler(req: any, res: any) {
+  try {
+    if (!cachedApp) {
+      const mod = await import("../server/_core/app");
+      cachedApp = mod.createApp();
+    }
 
-export default function handler(req: any, res: any) {
-  return app(req, res);
+    return cachedApp(req, res);
+  } catch (error) {
+    console.error("[api/index] bootstrap failed", error);
+    res.statusCode = 500;
+    res.setHeader("content-type", "application/json");
+    res.end(JSON.stringify({ error: "API bootstrap failed" }));
+  }
 }
