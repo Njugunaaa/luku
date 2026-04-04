@@ -3,13 +3,12 @@ import { drizzle } from "drizzle-orm/mysql2";
 import {
   cartItems,
   categories,
-  InsertOrder,
-  InsertUser,
   orderItems,
   orders,
   products,
   users,
 } from "../drizzle/schema";
+import type { InsertOrder, InsertUser } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;

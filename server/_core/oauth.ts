@@ -2,8 +2,12 @@ import { COOKIE_NAME, ONE_YEAR_MS } from "../../shared/const";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
-import bcrypt from "bcrypt";
 import crypto from "crypto";
+
+async function loadBcrypt() {
+  const mod = await import("bcrypt");
+  return mod.default ?? mod;
+}
 
 // basic REST endpoints for auth – primarily we use tRPC versions but these
 // are provided for any non-TRPC clients or quick testing.
@@ -19,6 +23,7 @@ export function registerOAuthRoutes(app: {
       return res.status(400).json({ error: "email and password required" });
     }
     try {
+      const bcrypt = await loadBcrypt();
       const existing = await db.getUserByEmail(email);
       if (existing) return res.status(409).json({ error: "Email already in use" });
       const hash = await bcrypt.hash(password, 10);
@@ -45,6 +50,7 @@ export function registerOAuthRoutes(app: {
       return res.status(400).json({ error: "email and password required" });
     }
     try {
+      const bcrypt = await loadBcrypt();
       const user = await db.getUserByEmail(email);
       if (!user || !user.passwordHash) {
         return res.status(401).json({ error: "invalid credentials" });

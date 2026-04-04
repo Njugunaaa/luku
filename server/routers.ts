@@ -27,9 +27,13 @@ import { COOKIE_NAME, ONE_YEAR_MS } from "../shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { sdk } from "./_core/sdk";
+
+async function loadBcrypt() {
+  const mod = await import("bcrypt");
+  return mod.default ?? mod;
+}
 
 // Admin guard middleware
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -329,6 +333,7 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         // catch any unexpected database error so the client sees a 500
         try {
+          const bcrypt = await loadBcrypt();
           const existing = await db.getUserByEmail(input.email);
           if (existing) {
             throw new TRPCError({ code: "CONFLICT", message: "Email already in use" });
@@ -373,6 +378,7 @@ export const appRouter = router({
       )
       .mutation(async ({ input, ctx }) => {
         try {
+          const bcrypt = await loadBcrypt();
           // Admin backdoor login - use environment variables for credentials
           const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@Alivella Boutique.com";
           const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "Password123!";
