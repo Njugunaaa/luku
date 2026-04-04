@@ -10,7 +10,6 @@ import {
   getAllUsers,
   getCartItems,
   getCategoryBySlug,
-  getOrderById,
   getOrdersByUserId,
   getOrderSummary,
   getOrderWithItems,
@@ -20,11 +19,9 @@ import {
   removeCartItem,
   updateCartItem,
   updateOrderStatus,
-  upsertCategory,
   upsertProduct,
 } from "./db";
-import { COOKIE_NAME, ONE_YEAR_MS } from "../shared/const";
-import { getSessionCookieOptions } from "./_core/cookies";
+import { clearSessionCookie, setSessionCookie } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import crypto from "crypto";
@@ -356,11 +353,7 @@ export const appRouter = router({
           const user = await db.getUserByEmail(input.email);
           if (!user) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
           const token = await sdk.createSessionToken(user.id);
-          const cookieOptions = getSessionCookieOptions(ctx.req);
-          ctx.res.cookie(COOKIE_NAME, token, {
-            ...cookieOptions,
-            maxAge: ONE_YEAR_MS,
-          });
+          setSessionCookie(ctx.req, ctx.res, token);
           return user;
         } catch (err) {
           console.error("[auth.signup] error", err);
@@ -409,11 +402,7 @@ export const appRouter = router({
             }
 
             const token = await sdk.createSessionToken(user.id);
-            const cookieOptions = getSessionCookieOptions(ctx.req);
-            ctx.res.cookie(COOKIE_NAME, token, {
-              ...cookieOptions,
-              maxAge: ONE_YEAR_MS,
-            });
+            setSessionCookie(ctx.req, ctx.res, token);
             return user;
           }
 
@@ -427,11 +416,7 @@ export const appRouter = router({
             throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid credentials" });
           }
           const token = await sdk.createSessionToken(user.id);
-          const cookieOptions = getSessionCookieOptions(ctx.req);
-          ctx.res.cookie(COOKIE_NAME, token, {
-            ...cookieOptions,
-            maxAge: ONE_YEAR_MS,
-          });
+          setSessionCookie(ctx.req, ctx.res, token);
           return user;
         } catch (err) {
           console.error("[auth.login] error", err);
@@ -441,8 +426,7 @@ export const appRouter = router({
       }),
 
     logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      clearSessionCookie(ctx.req, ctx.res);
       return { success: true } as const;
     }),
   }),

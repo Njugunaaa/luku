@@ -1,6 +1,5 @@
-import { COOKIE_NAME, ONE_YEAR_MS } from "../../shared/const";
 import * as db from "../db";
-import { getSessionCookieOptions } from "./cookies";
+import { clearSessionCookie, setSessionCookie } from "./cookies";
 import { sdk } from "./sdk";
 import crypto from "crypto";
 
@@ -35,8 +34,7 @@ export function registerOAuthRoutes(app: {
       await db.upsertUser({ openId, email, name: name ?? null, passwordHash: hash, role } as any);
       const user = await db.getUserByEmail(email);
       const token = await sdk.createSessionToken(user!.id);
-      const cookieOptions = getSessionCookieOptions(req);
-      res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      setSessionCookie(req, res, token);
       return res.json({ success: true, user });
     } catch (err) {
       console.error("/api/auth/signup error", err);
@@ -60,8 +58,7 @@ export function registerOAuthRoutes(app: {
         return res.status(401).json({ error: "invalid credentials" });
       }
       const token = await sdk.createSessionToken(user.id);
-      const cookieOptions = getSessionCookieOptions(req);
-      res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      setSessionCookie(req, res, token);
       return res.json({ success: true, user });
     } catch (err) {
       console.error("/api/auth/login error", err);
@@ -70,8 +67,7 @@ export function registerOAuthRoutes(app: {
   });
 
   app.post("/api/auth/logout", (req, res) => {
-    const cookieOptions = getSessionCookieOptions(req);
-    res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+    clearSessionCookie(req, res);
     res.json({ success: true });
   });
 }
