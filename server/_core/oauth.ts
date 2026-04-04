@@ -1,5 +1,4 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
-import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
@@ -8,8 +7,13 @@ import crypto from "crypto";
 
 // basic REST endpoints for auth – primarily we use tRPC versions but these
 // are provided for any non-TRPC clients or quick testing.
-export function registerOAuthRoutes(app: Express) {
-  app.post("/api/auth/signup", async (req: Request, res: Response) => {
+export function registerOAuthRoutes(app: {
+  post: (
+    path: string,
+    handler: (req: any, res: any) => void | Promise<void>
+  ) => unknown;
+}) {
+  app.post("/api/auth/signup", async (req, res) => {
     const { email, password, name } = req.body;
     if (!email || !password) {
       return res.status(400).json({ error: "email and password required" });
@@ -35,7 +39,7 @@ export function registerOAuthRoutes(app: Express) {
     }
   });
 
-  app.post("/api/auth/login", async (req: Request, res: Response) => {
+  app.post("/api/auth/login", async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
       return res.status(400).json({ error: "email and password required" });
@@ -59,7 +63,7 @@ export function registerOAuthRoutes(app: Express) {
     }
   });
 
-  app.post("/api/auth/logout", (req: Request, res: Response) => {
+  app.post("/api/auth/logout", (req, res) => {
     const cookieOptions = getSessionCookieOptions(req);
     res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
     res.json({ success: true });

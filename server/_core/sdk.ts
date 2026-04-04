@@ -1,6 +1,5 @@
 import { COOKIE_NAME } from "@shared/const";
 import { parse as parseCookieHeader } from "cookie";
-import type { Request } from "express";
 import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
@@ -12,6 +11,11 @@ export type SessionPayload = {
   userId: number;
 };
 
+type RequestLike = {
+  headers?: {
+    cookie?: string | undefined;
+  };
+};
 
 class SDKServer {
   constructor() {}
@@ -85,8 +89,8 @@ class SDKServer {
   }
 
 
-  async authenticateRequest(req: Request): Promise<User> {
-    const cookies = this.parseCookies(req.headers.cookie);
+  async authenticateRequest(req: RequestLike): Promise<User> {
+    const cookies = this.parseCookies(req.headers?.cookie);
     const sessionCookie = cookies.get(COOKIE_NAME);
     const session = await this.verifySession(sessionCookie);
 

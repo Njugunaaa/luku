@@ -1,10 +1,10 @@
-import express, { type Express } from "express";
+import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { registerOAuthRoutes } from "./oauth";
 
-export function createApp(): Express {
+export function createApp() {
   const app = express();
 
   app.use(express.json({ limit: "50mb" }));
