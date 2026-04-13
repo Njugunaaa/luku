@@ -1,10 +1,12 @@
 export type AdminSection =
   | "overview"
   | "current"
+  | "pending"
   | "past"
   | "surveillance"
   | "manual"
   | "inventory"
+  | "customers"
   | "analytics";
 
 export type AdminOrder = {
@@ -43,6 +45,7 @@ export type AdminProduct = {
   originalPrice?: string | number | null;
   categoryId: number;
   imageUrl: string;
+  images?: string | null;
   brand?: string | null;
   stockCount?: number | null;
   inStock?: boolean | null;

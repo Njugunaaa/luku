@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Edit3, Package, Truck, X } from "lucide-react";
+import { Edit3, Package, Trash2, Truck, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -102,6 +102,8 @@ export function OrdersTable({
 type OrderDetailModalProps = {
   order: AdminOrder;
   loading: boolean;
+  deleteLoading?: boolean;
+  canDelete?: boolean;
   onClose: () => void;
   onUpdate: (
     id: number,
@@ -109,13 +111,17 @@ type OrderDetailModalProps = {
     paymentStatus: string,
     notes: string,
   ) => Promise<void>;
+  onDelete?: (id: number) => Promise<void>;
 };
 
 export function OrderDetailModal({
   order,
   loading,
+  deleteLoading = false,
+  canDelete = false,
   onClose,
   onUpdate,
+  onDelete,
 }: OrderDetailModalProps) {
   const [status, setStatus] = useState(order.status);
   const [paymentStatus, setPaymentStatus] = useState(order.paymentStatus);
@@ -270,6 +276,18 @@ export function OrderDetailModal({
         </div>
 
         <div className="flex flex-col gap-3 border-t border-border px-6 py-5 sm:flex-row">
+          {canDelete && onDelete ? (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => onDelete(order.id)}
+              disabled={deleteLoading}
+              className="gap-2 sm:flex-1"
+            >
+              <Trash2 className="h-4 w-4" />
+              {deleteLoading ? "Deleting..." : "Delete Pending Order"}
+            </Button>
+          ) : null}
           <Button type="button" variant="outline" onClick={onClose} className="sm:flex-1">
             Close
           </Button>

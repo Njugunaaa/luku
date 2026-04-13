@@ -1,5 +1,5 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { trpc } from "@/lib/trpc";
+import React, { createContext, useCallback, useContext } from "react";
+import { api } from "@/lib/api";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
 
@@ -35,29 +35,29 @@ const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
-  const utils = trpc.useUtils();
+  const utils = api.useUtils();
 
-  const { data: cartData, isLoading, refetch } = trpc.cart.get.useQuery(undefined, {
+  const { data: cartData, isLoading, refetch } = api.cart.get.useQuery(undefined, {
     enabled: isAuthenticated,
     staleTime: 30_000,
   });
 
-  const addMutation = trpc.cart.add.useMutation({
+  const addMutation = api.cart.add.useMutation({
     onSuccess: () => { utils.cart.get.invalidate(); },
     onError: (err) => toast.error(err.message),
   });
 
-  const updateMutation = trpc.cart.update.useMutation({
+  const updateMutation = api.cart.update.useMutation({
     onSuccess: () => { utils.cart.get.invalidate(); },
     onError: (err) => toast.error(err.message),
   });
 
-  const removeMutation = trpc.cart.remove.useMutation({
+  const removeMutation = api.cart.remove.useMutation({
     onSuccess: () => { utils.cart.get.invalidate(); },
     onError: (err) => toast.error(err.message),
   });
 
-  const clearMutation = trpc.cart.clear.useMutation({
+  const clearMutation = api.cart.clear.useMutation({
     onSuccess: () => { utils.cart.get.invalidate(); },
   });
 

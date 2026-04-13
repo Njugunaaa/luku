@@ -1,7 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { useCart } from "@/contexts/CartContext";
-import { trpc } from "@/lib/trpc";
+import { api } from "@/lib/api";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -40,10 +40,10 @@ export default function ProductDetail() {
   const [adding, setAdding] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
 
-  const { data: product, isLoading, error } = trpc.products.bySlug.useQuery({ slug }, { enabled: !!slug });
-  const { data: categories = [] } = trpc.categories.list.useQuery();
+  const { data: product, isLoading, error } = api.products.bySlug.useQuery({ slug }, { enabled: !!slug });
+  const { data: categories = [] } = api.categories.list.useQuery();
 
-  const { data: relatedProducts } = trpc.products.list.useQuery(
+  const { data: relatedProducts } = api.products.list.useQuery(
     { categoryId: product?.categoryId, limit: 4 },
     { enabled: !!product?.categoryId }
   );

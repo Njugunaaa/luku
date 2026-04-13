@@ -388,6 +388,7 @@ export function InventoryManager({
 }: InventoryManagerProps) {
   const [search, setSearch] = useState("");
   const [form, setForm] = useState(EMPTY_PRODUCT_FORM);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const filteredProducts = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -408,7 +409,7 @@ export function InventoryManager({
       originalPrice: String(product.originalPrice ?? ""),
       categoryId: product.categoryId,
       imageUrl: product.imageUrl,
-      images: product.imageUrl,
+      images: product.images ?? JSON.stringify([product.imageUrl]),
       sizes: product.sizes ?? "",
       colors: product.colors ?? "",
       brand: product.brand ?? "",
@@ -419,6 +420,38 @@ export function InventoryManager({
       isNew: product.isNew ?? false,
       tags: product.tags ?? "",
     });
+  }
+
+  async function handleImageSelection(file?: File) {
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file.");
+      return;
+    }
+
+    setUploadingImage(true);
+
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error("Unable to read image file."));
+        reader.readAsDataURL(file);
+      });
+
+      setForm((current) => ({
+        ...current,
+        imageUrl: dataUrl,
+        images: JSON.stringify([dataUrl]),
+      }));
+
+      toast.success("Image added to the product form.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to add image.");
+    } finally {
+      setUploadingImage(false);
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -645,10 +678,47 @@ export function InventoryManager({
               id="inventory-image"
               value={form.imageUrl}
               onChange={(event) =>
-                setForm((current) => ({ ...current, imageUrl: event.target.value }))
+                setForm((current) => ({
+                  ...current,
+                  imageUrl: event.target.value,
+                  images: event.target.value ? JSON.stringify([event.target.value]) : "",
+                }))
               }
               className="mt-2"
             />
+          </div>
+
+          <div className="rounded-3xl border border-border bg-background/70 p-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm font-medium text-foreground">Upload from your device</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Pick an image from your phone or computer and it will be attached directly to this product.
+                </p>
+              </div>
+              <label className="inline-flex cursor-pointer items-center justify-center rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition-colors hover:border-pink-400 hover:text-pink-500">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => {
+                    void handleImageSelection(event.target.files?.[0]);
+                    event.currentTarget.value = "";
+                  }}
+                />
+                {uploadingImage ? "Adding image..." : "Choose image file"}
+              </label>
+            </div>
+
+            {form.imageUrl ? (
+              <div className="mt-4 overflow-hidden rounded-3xl border border-border">
+                <img
+                  src={form.imageUrl}
+                  alt={form.name || "Product preview"}
+                  className="h-56 w-full object-cover"
+                />
+              </div>
+            ) : null}
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">

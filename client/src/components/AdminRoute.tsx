@@ -1,6 +1,6 @@
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
+import { ApiError, api } from "@/lib/api";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,14 +23,14 @@ export function AdminRoute({ children }: AdminRouteProps) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loadingLogin, setLoadingLogin] = useState(false);
-  const utils = trpc.useContext();
+  const utils = api.useContext();
 
-  const loginMutation = trpc.auth.login.useMutation({
+  const loginMutation = api.auth.login.useMutation({
     onSuccess: () => {
       utils.auth.me.invalidate();
     },
     onError: (err) => {
-      if (err.data?.code === "UNAUTHORIZED") {
+      if (err instanceof ApiError && err.status === 401) {
         setError("Invalid credentials. Please try again.");
       } else {
         setError("Unable to log in right now. Please try again later.");
