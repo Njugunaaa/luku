@@ -59,7 +59,7 @@ export default function Header() {
   const navLinkClass = (href: string) => {
     const active = location.startsWith(href);
     return `
-      px-3.5 py-1.5 text-[13px] font-medium tracking-wide rounded-full
+      px-3.5 py-1.5 text-[15px] font-medium tracking-wide rounded-full
       transition-all duration-200 select-none whitespace-nowrap
       ${active
         ? "text-white bg-pink-400 ring-1 ring-pink-300/50 shadow-[0_0_14px_rgba(244,114,182,0.4)]"
@@ -100,11 +100,11 @@ export default function Header() {
           <div className="flex items-center justify-between h-full gap-4">
 
             {/* ── Logo ──────────────────────────────────────────────── */}
-            <Link href="/" className="shrink-0 flex items-center">
+            <Link href="/" className="shrink-0 flex items-center h-full">
               <img
-                src={isDark ? "/alivella_dark_mode.png" : "/alivella_light_mode.png"}
+                src={isDark ? "/alivella_dark_mode1.png" : "/alivella_light_mode1.png"}
                 alt="Alivella Boutique"
-                className="h-66 w-auto object-contain hover:opacity-70 transition-opacity duration-200"
+                className="h-13 w-auto object-contain hover:opacity-70 transition-opacity duration-200"
               />
             </Link>
 
@@ -193,7 +193,7 @@ export default function Header() {
               ) : (
                 <Link href="/login" className={`
                   inline-flex items-center gap-1.5 rounded-full border
-                  px-3.5 py-1.5 text-xs font-medium transition-all duration-200
+                  px-3.5 py-1.5 text-sm font-medium transition-all duration-200
                   ${isDark
                     ? "border-white/18 text-white/75 hover:bg-white/8 hover:text-white"
                     : "border-black/12 text-black/65 hover:bg-black/5 hover:text-black"
