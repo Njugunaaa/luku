@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
-import { trpc } from "@/lib/trpc";
+import { api } from "@/lib/api";
 import { motion } from "framer-motion";
 import { ArrowLeft, CheckCircle, Clock, Package, Truck, XCircle } from "lucide-react";
 import { Link } from "wouter";
@@ -18,7 +18,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof
 
 export default function AccountOrders() {
   const { isAuthenticated } = useAuth();
-  const { data: orders, isLoading } = trpc.orders.myOrders.useQuery(undefined, {
+  const { data: orders, isLoading } = api.orders.myOrders.useQuery(undefined, {
     enabled: isAuthenticated,
   });
 

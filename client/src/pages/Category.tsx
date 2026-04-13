@@ -1,4 +1,4 @@
-import { trpc } from "@/lib/trpc";
+import { api } from "@/lib/api";
 import { motion } from "framer-motion";
 import { Filter, Grid3X3, LayoutList, Search, SlidersHorizontal } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -60,8 +60,8 @@ export default function Category() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
 
-  const { data: category } = trpc.categories.bySlug.useQuery({ slug }, { enabled: !!slug });
-  const { data: products = [], isLoading } = trpc.products.list.useQuery(
+  const { data: category } = api.categories.bySlug.useQuery({ slug }, { enabled: !!slug });
+  const { data: products = [], isLoading } = api.products.list.useQuery(
     { categoryId: category?.id, limit: 60 },
     { enabled: !!category?.id }
   );

@@ -1,7 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { useCart } from "@/contexts/CartContext";
-import { trpc } from "@/lib/trpc";
+import { api } from "@/lib/api";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -38,8 +38,9 @@ export default function Checkout() {
   const [submitting, setSubmitting] = useState(false);
   const [orderId, setOrderId] = useState<number | null>(null);
 
-  const createOrder = trpc.orders.create.useMutation({
-    onSuccess: (order) => {
+  const createOrder = api.orders.create.useMutation({
+    onSuccess: async (order) => {
+      await clearCart().catch(() => undefined);
       setOrderId(order.id);
       toast.success("Order placed successfully!");
     },

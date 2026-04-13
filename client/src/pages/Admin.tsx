@@ -12,7 +12,7 @@ import {
   STATUS_COLORS,
 } from "@/components/admin/admin-types";
 import { Button } from "@/components/ui/button";
-import { trpc } from "@/lib/trpc";
+import { api } from "@/lib/api";
 import {
   AlertTriangle,
   BarChart3,
@@ -69,10 +69,12 @@ const ADMIN_SECTIONS: Array<{
 }> = [
   { id: "overview", label: "Overview", description: "Daily command center", icon: BarChart3 },
   { id: "current", label: "Current Orders", description: "Active fulfillment queue", icon: ClipboardList },
+  { id: "pending", label: "Pending Orders", description: "Delete or process fresh orders", icon: Clock3 },
   { id: "past", label: "Past Orders", description: "Completed and cancelled history", icon: Clock3 },
   { id: "surveillance", label: "Surveillance", description: "Watch urgent operations", icon: AlertTriangle },
   { id: "manual", label: "Manual Entry", description: "Book WhatsApp orders", icon: Truck },
   { id: "inventory", label: "Inventory", description: "Manage stock and pricing", icon: Boxes },
+  { id: "customers", label: "Customers", description: "Review every registered user", icon: Users },
   { id: "analytics", label: "Analytics", description: "Weekly, monthly, yearly revenue", icon: TrendingUp },
 ];
 
@@ -81,17 +83,17 @@ export default function Admin() {
   const [activeSection, setActiveSection] = useState<AdminSection>("overview");
   const [analyticsPeriod, setAnalyticsPeriod] = useState<AnalyticsPeriod>("weekly");
   const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
-  const utils = trpc.useUtils();
+  const utils = api.useUtils();
 
-  const ordersQuery = trpc.admin.allOrders.useQuery({});
-  const weeklySummaryQuery = trpc.admin.weeklySummary.useQuery();
-  const monthlySummaryQuery = trpc.admin.monthlySummary.useQuery();
-  const yearlySummaryQuery = trpc.admin.yearlySummary.useQuery();
-  const usersQuery = trpc.admin.allUsers.useQuery();
-  const productsQuery = trpc.admin.allProducts.useQuery();
-  const categoriesQuery = trpc.categories.list.useQuery();
+  const ordersQuery = api.admin.allOrders.useQuery({});
+  const weeklySummaryQuery = api.admin.weeklySummary.useQuery();
+  const monthlySummaryQuery = api.admin.monthlySummary.useQuery();
+  const yearlySummaryQuery = api.admin.yearlySummary.useQuery();
+  const usersQuery = api.admin.allUsers.useQuery();
+  const productsQuery = api.admin.allProducts.useQuery();
+  const categoriesQuery = api.categories.list.useQuery();
 
-  const updateStatus = trpc.admin.updateOrderStatus.useMutation({
+  const updateStatus = api.admin.updateOrderStatus.useMutation({
     onSuccess: async () => {
       toast.success("Order updated.");
       setSelectedOrder(null);
@@ -105,10 +107,10 @@ export default function Admin() {
     onError: (error) => toast.error(error.message),
   });
 
-  const createManualOrder = trpc.admin.createManualOrder.useMutation({
+  const createManualOrder = api.admin.createManualOrder.useMutation({
     onSuccess: async () => {
       toast.success("Manual order created.");
-      setActiveSection("current");
+      setActiveSection("pending");
       await Promise.all([
         ordersQuery.refetch(),
         weeklySummaryQuery.refetch(),
@@ -119,10 +121,24 @@ export default function Admin() {
     onError: (error) => toast.error(error.message),
   });
 
-  const saveProduct = trpc.admin.upsertProduct.useMutation({
+  const saveProduct = api.admin.upsertProduct.useMutation({
     onSuccess: async () => {
       toast.success("Inventory saved.");
       await productsQuery.refetch();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const deleteOrder = api.admin.deleteOrder.useMutation({
+    onSuccess: async () => {
+      toast.success("Pending order deleted.");
+      setSelectedOrder(null);
+      await Promise.all([
+        ordersQuery.refetch(),
+        weeklySummaryQuery.refetch(),
+        monthlySummaryQuery.refetch(),
+        yearlySummaryQuery.refetch(),
+      ]);
     },
     onError: (error) => toast.error(error.message),
   });
@@ -137,6 +153,10 @@ export default function Admin() {
 
   const currentOrders = useMemo(
     () => orders.filter((order) => !["delivered", "cancelled"].includes(order.status)),
+    [orders],
+  );
+  const pendingOrders = useMemo(
+    () => orders.filter((order) => order.status === "pending"),
     [orders],
   );
   const pastOrders = useMemo(
@@ -177,11 +197,11 @@ export default function Admin() {
   const statusMixData = useMemo(
     () => [
       { label: "Active", count: currentOrders.length },
+      { label: "Pending", count: pendingOrders.length },
       { label: "Past", count: pastOrders.length },
-      { label: "Manual", count: manualOrders.length },
       { label: "Urgent", count: urgentOrders.length },
     ],
-    [currentOrders.length, manualOrders.length, pastOrders.length, urgentOrders.length],
+    [currentOrders.length, pastOrders.length, pendingOrders.length, urgentOrders.length],
   );
 
   if (!isAuthenticated || user?.role !== "admin") {
@@ -248,8 +268,8 @@ export default function Admin() {
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Live counts</p>
             <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
               <MetricChip label="Current" value={currentOrders.length} />
+              <MetricChip label="Pending" value={pendingOrders.length} />
               <MetricChip label="Urgent" value={urgentOrders.length} />
-              <MetricChip label="Manual" value={manualOrders.length} />
               <MetricChip label="Low stock" value={lowStockProducts.length} />
             </div>
           </div>
@@ -298,9 +318,9 @@ export default function Admin() {
                   icon={DollarSign}
                 />
                 <StatCard
-                  label="Current Orders"
-                  value={String(currentOrders.length)}
-                  note={`${urgentOrders.length} need attention`}
+                  label="Pending Orders"
+                  value={String(pendingOrders.length)}
+                  note="Delete or process fresh orders fast"
                   icon={ClipboardList}
                 />
                 <StatCard
@@ -344,6 +364,11 @@ export default function Admin() {
                   <h3 className="text-xl font-semibold">Operational watchlist</h3>
                   <div className="mt-5 space-y-4">
                     <WatchCard
+                      title="Pending orders"
+                      count={pendingOrders.length}
+                      detail="Fresh orders waiting for confirmation, processing, or deletion."
+                    />
+                    <WatchCard
                       title="Urgent orders"
                       count={urgentOrders.length}
                       detail="Pending, unpaid, or aging orders that need operator follow-up."
@@ -373,6 +398,32 @@ export default function Admin() {
                 onSelect={setSelectedOrder}
               />
             </section>
+          ) : null}
+
+          {activeSection === "pending" ? (
+            <div className="space-y-6">
+              <section className="rounded-[2rem] border border-border bg-card p-6">
+                <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                  <div>
+                    <h3 className="text-xl font-semibold">Pending order desk</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Review fresh orders, move them forward, or delete only the ones that should not stay in the system.
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-pink-400/20 bg-pink-500/10 px-4 py-3 text-sm text-pink-700 dark:text-pink-200">
+                    {pendingOrders.length} pending order{pendingOrders.length === 1 ? "" : "s"} waiting
+                  </div>
+                </div>
+                <div className="mt-6">
+                  <OrdersTable
+                    orders={pendingOrders}
+                    emptyTitle="No pending orders"
+                    emptyDescription="Fresh orders will appear here before they are confirmed or processed."
+                    onSelect={setSelectedOrder}
+                  />
+                </div>
+              </section>
+            </div>
           ) : null}
 
           {activeSection === "past" ? (
@@ -498,6 +549,60 @@ export default function Admin() {
             />
           ) : null}
 
+          {activeSection === "customers" ? (
+            <section className="rounded-[2rem] border border-border bg-card p-6">
+              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <h3 className="text-xl font-semibold">Customer accounts</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Every registered user in one clean list so you can track who is shopping and who has admin access.
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-border bg-background/70 px-4 py-3 text-sm text-muted-foreground">
+                  {allUsers.length} total account{allUsers.length === 1 ? "" : "s"}
+                </div>
+              </div>
+
+              <div className="mt-6 overflow-x-auto rounded-3xl border border-border">
+                <table className="w-full min-w-[760px] text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-secondary/40">
+                      {["Name", "Email", "Role", "Joined", "Last Seen"].map((heading) => (
+                        <th
+                          key={heading}
+                          className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
+                        >
+                          {heading}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allUsers.map((account: any) => (
+                      <tr key={account.id} className="border-b border-border/70">
+                        <td className="px-4 py-4 font-medium text-foreground">
+                          {account.name || "No name"}
+                        </td>
+                        <td className="px-4 py-4 text-muted-foreground">{account.email || "No email"}</td>
+                        <td className="px-4 py-4">
+                          <span className="rounded-full bg-pink-500/10 px-3 py-1 text-xs font-semibold text-pink-600 dark:text-pink-200">
+                            {account.role === "admin" ? "Admin" : "Customer"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-muted-foreground">
+                          {account.createdAt ? formatOrderDate(account.createdAt) : "Unknown"}
+                        </td>
+                        <td className="px-4 py-4 text-muted-foreground">
+                          {account.lastSignedIn ? formatOrderDate(account.lastSignedIn) : "Never"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          ) : null}
+
           {activeSection === "analytics" ? (
             <div className="space-y-6">
               <section className="rounded-[2rem] border border-border bg-card p-6">
@@ -611,6 +716,8 @@ export default function Admin() {
         <OrderDetailModal
           order={selectedOrder}
           loading={updateStatus.isPending}
+          deleteLoading={deleteOrder.isPending}
+          canDelete={selectedOrder.status === "pending"}
           onClose={() => setSelectedOrder(null)}
           onUpdate={async (id, status, paymentStatus, notes) => {
             await updateStatus.mutateAsync({
@@ -619,6 +726,9 @@ export default function Admin() {
               paymentStatus: paymentStatus as any,
               notes,
             });
+          }}
+          onDelete={async (id) => {
+            await deleteOrder.mutateAsync({ orderId: id });
           }}
         />
       ) : null}
@@ -697,6 +807,8 @@ function getSectionIntro(section: AdminSection) {
       return "Get a clean read on revenue, fulfillment pressure, customer accounts, and stock levels before you dive into actions.";
     case "current":
       return "Handle live customer orders, payments, and delivery progress from the active fulfillment queue.";
+    case "pending":
+      return "Review newly placed orders quickly, then either move them into fulfillment or remove the ones that should not remain.";
     case "past":
       return "Review completed and cancelled orders for service follow-up, reconciliation, and support history.";
     case "surveillance":
@@ -705,6 +817,8 @@ function getSectionIntro(section: AdminSection) {
       return "Book WhatsApp and walk-in orders on behalf of customers so every sale hits reporting and stock correctly.";
     case "inventory":
       return "Add new inventory, refresh pricing, and keep low-stock items moving with a cleaner merchandise desk.";
+    case "customers":
+      return "See every registered customer and admin account in one place with the key dates that matter.";
     case "analytics":
       return "Track revenue and order performance with weekly, monthly, and yearly views built for admin decision-making.";
   }
