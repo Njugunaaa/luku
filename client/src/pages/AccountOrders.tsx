@@ -1,17 +1,17 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { api } from "@/lib/api";
-import { normalizeArray } from "@/lib/normalizeArray";
 import { motion } from "framer-motion";
 import { ArrowLeft, CheckCircle, Clock, Package, Truck, XCircle } from "lucide-react";
 import { Link } from "wouter";
+import { Badge } from "@/components/ui/badge";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof Clock }> = {
   pending: { label: "Pending", color: "bg-yellow-100 text-yellow-700", icon: Clock },
-  confirmed: { label: "Confirmed", color: "bg-blue-100 text-blue-700", icon: CheckCircle },
+  confirmed: { label: "Confirmed", color: "bg-pink-100 text-pink-700", icon: CheckCircle },
   paid: { label: "Paid", color: "bg-green-100 text-green-700", icon: CheckCircle },
-  processing: { label: "Processing", color: "bg-indigo-100 text-indigo-700", icon: Package },
-  shipped: { label: "Shipped", color: "bg-cyan-100 text-cyan-700", icon: Truck },
+  processing: { label: "Processing", color: "bg-fuchsia-100 text-fuchsia-700", icon: Package },
+  shipped: { label: "Shipped", color: "bg-rose-100 text-rose-700", icon: Truck },
   delivered: { label: "Delivered", color: "bg-green-100 text-green-800", icon: CheckCircle },
   cancelled: { label: "Cancelled", color: "bg-red-100 text-red-700", icon: XCircle },
 };
@@ -32,8 +32,6 @@ export default function AccountOrders() {
       </div>
     );
   }
-
-  const normalizedOrders = normalizeArray(orders);
 
   return (
     <div className="min-h-screen bg-secondary/30">
@@ -61,7 +59,7 @@ export default function AccountOrders() {
               </div>
             ))}
           </div>
-        ) : normalizedOrders.length === 0 ? (
+        ) : !orders || orders.length === 0 ? (
           <div className="text-center py-24">
             <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
               <Package className="w-7 h-7 text-muted-foreground" />
@@ -74,10 +72,9 @@ export default function AccountOrders() {
           </div>
         ) : (
           <div className="space-y-4">
-            {normalizedOrders.map((order: any, i: number) => {
-              const statusCfg = STATUS_CONFIG[order.status] ?? STATUS_CONFIG["pending"]!;
+            {orders.map((order, i) => {
+              const statusCfg = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.pending;
               const StatusIcon = statusCfg.icon;
-              const orderItems = normalizeArray(order.items);
               return (
                 <motion.div
                   key={order.id}
@@ -110,7 +107,7 @@ export default function AccountOrders() {
 
                   {/* Items */}
                   <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
-                    {orderItems.slice(0, 4).map((item: any) => (
+                    {(order as any).items?.slice(0, 4).map((item: any) => (
                       <div key={item.id} className="shrink-0">
                         {item.productImage ? (
                           <img
@@ -125,9 +122,9 @@ export default function AccountOrders() {
                         )}
                       </div>
                     ))}
-                    {orderItems.length > 4 && (
+                    {(order as any).items?.length > 4 && (
                       <div className="w-12 h-12 bg-secondary rounded-lg flex items-center justify-center text-xs font-semibold text-muted-foreground shrink-0">
-                        +{orderItems.length - 4}
+                        +{(order as any).items.length - 4}
                       </div>
                     )}
                   </div>
@@ -135,7 +132,7 @@ export default function AccountOrders() {
                   <div className="flex items-center justify-between pt-3 border-t border-border">
                     <div>
                       <p className="text-xs text-muted-foreground">
-                        {orderItems.length} item{orderItems.length !== 1 ? "s" : ""}
+                        {(order as any).items?.length ?? 0} item{(order as any).items?.length !== 1 ? "s" : ""}
                         {order.needsDelivery && " · Delivery"}
                       </p>
                     </div>

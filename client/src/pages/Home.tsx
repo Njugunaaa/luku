@@ -3,7 +3,6 @@ import ProductCard from "@/components/ProductCard";
 import { CardStack } from "@/components/ui/card-stack";
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { api } from "@/lib/api";
-import { normalizeArray } from "@/lib/normalizeArray";
 import { motion, useInView } from "framer-motion";
 import {
   ArrowRight,
@@ -257,7 +256,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
-              {normalizeArray<any>(featuredProducts).slice(0, 8).map((product, index) => (
+              {(featuredProducts ?? []).slice(0, 8).map((product, index) => (
                 <motion.div
                   key={product.id}
                   initial={{ opacity: 0, y: 20 }}
