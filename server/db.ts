@@ -137,7 +137,8 @@ export async function getProducts(opts: {
   if (opts.limit) query.limit(opts.limit);
   if (opts.offset) query.offset(opts.offset);
 
-  return query;
+  // Explicitly await so Vercel cold-starts always receive a real array, not a query builder object
+  return await query;
 }
 
 export async function getProductById(id: number) {
@@ -315,7 +316,9 @@ export async function getAllOrders(opts: { status?: string; limit?: number; offs
   query.orderBy(desc(orders.createdAt));
   if (opts.limit) query.limit(opts.limit);
   if (opts.offset) query.offset(opts.offset);
-  return query;
+
+  // Explicitly await so Vercel cold-starts always receive a real array, not a query builder object
+  return await query;
 }
 
 export async function updateOrderStatus(id: number, status: string, paymentStatus?: string, notes?: string) {
@@ -349,4 +352,5 @@ export async function getOrderSummary(startDate: Date, endDate: Date) {
 
   return { totalOrders, totalRevenue, paidOrders, pendingOrders, deliveredOrders };
 }
+
 export { users, products, orders, orderItems, cartItems, categories };
