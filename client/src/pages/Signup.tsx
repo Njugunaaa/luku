@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { ImageSlider } from "@/components/ui/image-slider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ApiError, api } from "@/lib/api";
 import { redirectStore } from "@/lib/redirectStore";
-import { trpc } from "@/lib/trpc";
 import { motion, type Variants } from "framer-motion";
 import { AlertCircle, ArrowRight, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { useState } from "react";
@@ -52,16 +52,19 @@ export default function Signup() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [, setLocation] = useLocation();
 
-  const utils = trpc.useContext();
+  const utils = api.useContext();
 
-  const signupMutation = trpc.auth.signup.useMutation({
+  const signupMutation = api.auth.signup.useMutation({
     onSuccess: () => {
       loginMutation.mutate({ email, password });
     },
     onError: (err) => {
-      if (err.data?.code === "INTERNAL_SERVER_ERROR") {
+      if (err instanceof ApiError && err.status >= 500) {
         setError("Authentication is temporarily unavailable - please try again later.");
-      } else if (err.data?.code === "CONFLICT") {
+      } else if (
+        (err instanceof ApiError && err.status === 400) ||
+        err.message.toLowerCase().includes("already")
+      ) {
         setError("This email is already registered. Please sign in instead.");
       } else if (err.message.includes("too long")) {
         setError("Signup timed out. Please try again in a moment.");
@@ -74,7 +77,7 @@ export default function Signup() {
     },
   });
 
-  const loginMutation = trpc.auth.login.useMutation({
+  const loginMutation = api.auth.login.useMutation({
     onSuccess: async (user) => {
       utils.auth.me.setData(undefined, user);
       await utils.auth.me.invalidate();

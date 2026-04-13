@@ -9,7 +9,7 @@
  * Example usage:
  * ```tsx
  * // Frontend component
- * const transcribeMutation = trpc.voice.transcribe.useMutation({
+ * const transcribeMutation = useMutation({
  *   onSuccess: (data) => {
  *     console.log(data.text); // Full transcription
  *     console.log(data.language); // Detected language
@@ -260,7 +260,7 @@ function getLanguageName(langCode: string): string {
  *       
  *       // Check if it's an error
  *       if ('error' in result) {
- *         throw new TRPCError({
+ *         throw new HttpError({
  *           code: 'BAD_REQUEST',
  *           message: result.error,
  *           cause: result,

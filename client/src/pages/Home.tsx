@@ -2,10 +2,12 @@ import Hero from "@/components/Hero";
 import ProductCard from "@/components/ProductCard";
 import { CardStack } from "@/components/ui/card-stack";
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
-import { trpc } from "@/lib/trpc";
+import { api } from "@/lib/api";
 import { motion, useInView } from "framer-motion";
 import {
   ArrowRight,
+  Instagram,
+  Music2,
   Package,
   RefreshCw,
   Shield,
@@ -46,35 +48,35 @@ const CATEGORIES = [
   {
     slug: "mens-collection",
     label: "Men's Collection",
-    sub: "Streetwear · Casual · Denim",
+    sub: "Streetwear / Casual / Denim",
     image: "https://images.unsplash.com/photo-1617137968427-85924c800a22?w=600&q=80",
     color: "from-slate-900/80",
   },
   {
     slug: "womens-collection",
     label: "Women's Collection",
-    sub: "Dresses · Tops · Skirts",
+    sub: "Dresses / Tops / Skirts",
     image: "https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=600&q=80",
     color: "from-rose-900/80",
   },
   {
     slug: "shoes",
     label: "Shoes",
-    sub: "Sneakers · Boots · Heels",
+    sub: "Sneakers / Boots / Heels",
     image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80",
     color: "from-amber-900/80",
   },
   {
     slug: "accessories",
     label: "Accessories",
-    sub: "Hats · Belts · Bags",
+    sub: "Hats / Belts / Bags",
     image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80",
     color: "from-emerald-900/80",
   },
   {
     slug: "official-wear",
     label: "Official Wear",
-    sub: "Suits · Blazers · Formal",
+    sub: "Suits / Blazers / Formal",
     image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&q=80",
     color: "from-indigo-900/80",
   },
@@ -128,39 +130,61 @@ const CAROUSEL_ITEMS = [
   },
 ] as const;
 
-const FEATURES = [
-  { icon: Shield, title: "Curated Quality", desc: "Every piece is inspected and graded before listing." },
-  { icon: Truck, title: "Fast Delivery", desc: "Nairobi same-day delivery available on select orders." },
-  { icon: RefreshCw, title: "Easy Returns", desc: "Not happy? Return within 7 days, no questions asked." },
-  { icon: Sparkles, title: "New Drops Weekly", desc: "Fresh inventory added every week so you stay ahead." },
-] as const;
-
 export default function Home() {
-  const { data: featuredProducts, isLoading } = trpc.products.featured.useQuery();
+  const { data: featuredProducts, isLoading } = api.products.featured.useQuery();
 
   return (
     <div className="min-h-screen overflow-x-clip">
       <Hero />
 
-      <section className="border-y border-border bg-secondary">
+      {/* ── Social / trust strip ── */}
+      <section className="border-b border-border bg-background py-5">
         <div className="container">
-          <div className="grid grid-cols-2 divide-x divide-border md:grid-cols-4">
-            {FEATURES.map((feature) => (
-              <div key={feature.title} className="flex items-center gap-3 px-4 py-5">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/15">
-                  <feature.icon className="h-4.5 w-4.5 text-accent" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{feature.title}</p>
-                  <p className="hidden text-xs text-muted-foreground md:block">{feature.desc}</p>
-                </div>
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card px-5 py-4">
+            <div>
+              <p className="text-[11px] font-medium uppercase tracking-widest text-pink-500">
+                Don&apos;t miss the next drop
+              </p>
+              <p className="mt-1 text-md font-medium text-foreground">
+                Follow us to know when our next stock drops.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-sm text-muted-foreground">
+                  <Truck className="h-3 w-3" /> Fast Nairobi delivery
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-sm text-muted-foreground">
+                  <RefreshCw className="h-3 w-3" /> Easy returns
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-sm text-muted-foreground">
+                  <Shield className="h-3 w-3" /> Secure checkout
+                </span>
               </div>
-            ))}
+            </div>
+            <div className="flex gap-2">
+              <a
+                href="https://www.instagram.com/alivella_botique"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 rounded-lg border border-border bg-background px-3.5 py-2 text-sm font-medium text-foreground transition-colors hover:border-pink-400"
+              >
+                <Instagram className="h-4 w-4 text-pink-500" />
+                Instagram
+              </a>
+              <a
+                href="https://www.tiktok.com/@alivella.botique"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 rounded-lg border border-border bg-background px-3.5 py-2 text-sm font-medium text-foreground transition-colors hover:border-pink-400"
+              >
+                <Music2 className="h-4 w-4 text-pink-500" />
+                TikTok
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="py-20 md:py-28">
+      <section className="py-5 md:py-28">
         <div className="container">
           <FadeInSection className="mb-12 text-center">
             <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-accent">Browse by Category</p>
@@ -364,34 +388,6 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-accent py-20 md:py-24">
-        <div className="container text-center">
-          <FadeInSection>
-            <h2 className="mb-4 font-display text-4xl font-bold text-accent-foreground md:text-5xl">
-              Ready to find your look?
-            </h2>
-            <p className="mx-auto mb-8 max-w-md text-lg text-accent-foreground/70">
-              New pieces drop every week. Don&apos;t miss out on the best finds.
-            </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link
-                href="/category/womens-collection"
-                className="cta-swoop inline-flex items-center gap-2 rounded-xl px-8 py-3.5 text-sm font-semibold transition-all"
-              >
-                <ShoppingBag className="h-4 w-4" />
-                Shop Women
-              </Link>
-              <Link
-                href="/category/mens-collection"
-                className="inline-flex items-center gap-2 rounded-xl border-2 border-accent-foreground/30 bg-transparent px-8 py-3.5 text-sm font-semibold text-accent-foreground transition-all hover:bg-accent-foreground/10"
-              >
-                Shop Men
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </FadeInSection>
-        </div>
-      </section>
     </div>
   );
 }

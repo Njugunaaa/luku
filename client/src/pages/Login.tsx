@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { redirectStore } from "@/lib/redirectStore";
-import { trpc } from "@/lib/trpc";
+import { ApiError, api } from "@/lib/api";
 import { AlertCircle, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -17,9 +17,9 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [, setLocation] = useLocation();
 
-  const utils = trpc.useContext();
+  const utils = api.useContext();
 
-  const loginMutation = trpc.auth.login.useMutation({
+  const loginMutation = api.auth.login.useMutation({
     onSuccess: async (user) => {
       utils.auth.me.setData(undefined, user);
       await utils.auth.me.invalidate();
@@ -27,9 +27,9 @@ export default function Login() {
       setLocation(redirectUrl);
     },
     onError: (err) => {
-      if (err.data?.code === "INTERNAL_SERVER_ERROR") {
+      if (err instanceof ApiError && err.status >= 500) {
         setError("Unable to reach authentication service - please try again later.");
-      } else if (err.data?.code === "UNAUTHORIZED") {
+      } else if (err instanceof ApiError && err.status === 401) {
         setError("Invalid email or password. Please try again.");
       } else if (err.message.includes("too long")) {
         setError("Sign in timed out. Please try again in a moment.");

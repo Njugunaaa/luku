@@ -8,8 +8,8 @@ async function loadBcrypt() {
   return mod.default ?? mod;
 }
 
-// basic REST endpoints for auth – primarily we use tRPC versions but these
-// are provided for any non-TRPC clients or quick testing.
+// basic REST endpoints for auth – primarily we use API versions but these
+// are provided for any non-API clients or quick testing.
 export function registerOAuthRoutes(app: {
   post: (
     path: string,

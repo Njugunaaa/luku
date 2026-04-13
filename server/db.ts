@@ -158,7 +158,25 @@ export async function upsertProduct(data: typeof products.$inferInsert) {
   const db = await getDb();
   if (!db) return;
   await db.insert(products).values(data).onDuplicateKeyUpdate({
-    set: { name: data.name, description: data.description, price: data.price, imageUrl: data.imageUrl, inStock: data.inStock, featured: data.featured, updatedAt: new Date() }
+    set: {
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      originalPrice: data.originalPrice,
+      categoryId: data.categoryId,
+      imageUrl: data.imageUrl,
+      images: data.images,
+      sizes: data.sizes,
+      colors: data.colors,
+      brand: data.brand,
+      productcondition: data.productcondition,
+      inStock: data.inStock,
+      stockCount: data.stockCount,
+      featured: data.featured,
+      isNew: data.isNew,
+      tags: data.tags,
+      updatedAt: new Date(),
+    }
   });
 }
 
@@ -307,6 +325,13 @@ export async function updateOrderStatus(id: number, status: string, paymentStatu
   if (paymentStatus) updateData.paymentStatus = paymentStatus;
   if (notes !== undefined) updateData.notes = notes;
   await db.update(orders).set(updateData as any).where(eq(orders.id, id));
+}
+
+export async function deleteOrder(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(orderItems).where(eq(orderItems.orderId, id));
+  await db.delete(orders).where(eq(orders.id, id));
 }
 
 export async function getOrderSummary(startDate: Date, endDate: Date) {
