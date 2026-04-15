@@ -20,7 +20,7 @@ type MutationOptions<TData, TVariables> = UseMutationOptions<
 type HttpMethod = "GET" | "POST" | "PATCH" | "DELETE";
 
 const API_TIMEOUT_MS = 15_000;
-const API_BASE_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/+$/, "");
 
 export class ApiError extends Error {
   constructor(
@@ -256,6 +256,22 @@ export const api = {
           ...options,
         }),
     },
+    forgotPassword: {
+      useMutation: (options?: MutationOptions<{ success: true; resetUrl?: string }, { email: string }>) =>
+        useMutation({
+          mutationFn: (input) => post("/api/auth/forgot-password", input),
+          ...options,
+        }),
+    },
+    resetPassword: {
+      useMutation: (
+        options?: MutationOptions<{ success: true }, { token: string; password: string }>,
+      ) =>
+        useMutation({
+          mutationFn: (input) => post("/api/auth/reset-password", input),
+          ...options,
+        }),
+    },
   },
   products: {
     featured: {
@@ -291,7 +307,7 @@ export const api = {
       ) =>
         useQuery({
           queryKey: queryKeys.products.bySlug(input.slug),
-          queryFn: () => get(`/api/products/slug/${encodeURIComponent(input.slug)}`),
+          queryFn: () => get(`/api/products/${encodeURIComponent(input.slug)}`),
           ...options,
         }),
     },
@@ -381,7 +397,7 @@ export const api = {
       useQuery: (_input: undefined, options?: QueryOptions<any[]>) =>
         useQuery({
           queryKey: queryKeys.orders.myOrders,
-          queryFn: () => get("/api/orders/me"),
+          queryFn: () => get("/api/orders"),
           ...options,
         }),
     },
@@ -467,6 +483,34 @@ export const api = {
       useMutation: (options?: MutationOptions<{ success: true }, any>) =>
         useMutation({
           mutationFn: (input) => post("/api/admin/products", input),
+          ...options,
+        }),
+    },
+    deleteProduct: {
+      useMutation: (
+        options?: MutationOptions<{ success: true }, { productId: number }>,
+      ) =>
+        useMutation({
+          mutationFn: (input) => del(`/api/admin/products/${input.productId}`),
+          ...options,
+        }),
+    },
+    upsertCategory: {
+      useMutation: (
+        options?: MutationOptions<
+          { success: true },
+          {
+            slug: string;
+            name: string;
+            description?: string;
+            imageUrl?: string;
+            gender?: "men" | "women" | "unisex";
+            sortOrder?: number;
+          }
+        >,
+      ) =>
+        useMutation({
+          mutationFn: (input) => post("/api/admin/categories", input),
           ...options,
         }),
     },

@@ -15,6 +15,7 @@ type RequestLike = {
   headers?: {
     cookie?: string | undefined;
   };
+  cookies?: Record<string, string | undefined>;
 };
 
 class SDKServer {
@@ -90,8 +91,9 @@ class SDKServer {
 
 
   async authenticateRequest(req: RequestLike): Promise<User> {
-    const cookies = this.parseCookies(req.headers?.cookie);
-    const sessionCookie = cookies.get(COOKIE_NAME);
+    const sessionCookie =
+      req.cookies?.[COOKIE_NAME] ??
+      this.parseCookies(req.headers?.cookie).get(COOKIE_NAME);
     const session = await this.verifySession(sessionCookie);
 
     if (!session) {

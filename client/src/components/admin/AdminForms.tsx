@@ -339,6 +339,7 @@ type InventoryManagerProps = {
   categories: Array<{ id: number; name: string }>;
   products: AdminProduct[];
   loading: boolean;
+  deletingProductId?: number | null;
   onSubmit: (payload: {
     slug: string;
     name: string;
@@ -358,6 +359,7 @@ type InventoryManagerProps = {
     isNew?: boolean;
     tags?: string;
   }) => Promise<void>;
+  onDelete: (productId: number) => Promise<void>;
 };
 
 const EMPTY_PRODUCT_FORM = {
@@ -384,7 +386,9 @@ export function InventoryManager({
   categories,
   products,
   loading,
+  deletingProductId = null,
   onSubmit,
+  onDelete,
 }: InventoryManagerProps) {
   const [search, setSearch] = useState("");
   const [form, setForm] = useState(EMPTY_PRODUCT_FORM);
@@ -545,9 +549,24 @@ export function InventoryManager({
                   ) : null}
                 </div>
               </div>
-              <div className="flex items-center justify-end">
+              <div className="flex items-center justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => hydrateForm(product)}>
                   Edit
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={async () => {
+                    const shouldDelete = window.confirm(
+                      `Delete ${product.name} from the storefront catalog?`,
+                    );
+
+                    if (!shouldDelete) return;
+                    await onDelete(product.id);
+                  }}
+                  disabled={deletingProductId === product.id}
+                >
+                  {deletingProductId === product.id ? "Deleting..." : "Delete"}
                 </Button>
               </div>
             </div>
@@ -865,6 +884,231 @@ export function InventoryManager({
             {loading ? "Saving Product..." : "Save Product"}
           </Button>
         </form>
+      </section>
+    </div>
+  );
+}
+
+type CategoryRecord = {
+  id: number;
+  slug: string;
+  name: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  gender?: "men" | "women" | "unisex" | null;
+  sortOrder?: number | null;
+};
+
+type CategoryManagerProps = {
+  categories: CategoryRecord[];
+  loading: boolean;
+  onSubmit: (payload: {
+    slug: string;
+    name: string;
+    description?: string;
+    imageUrl?: string;
+    gender?: "men" | "women" | "unisex";
+    sortOrder?: number;
+  }) => Promise<void>;
+};
+
+const EMPTY_CATEGORY_FORM = {
+  slug: "",
+  name: "",
+  description: "",
+  imageUrl: "",
+  gender: "unisex" as "men" | "women" | "unisex",
+  sortOrder: 0,
+};
+
+export function CategoryManager({
+  categories,
+  loading,
+  onSubmit,
+}: CategoryManagerProps) {
+  const [form, setForm] = useState(EMPTY_CATEGORY_FORM);
+
+  function hydrateCategory(category: CategoryRecord) {
+    setForm({
+      slug: category.slug,
+      name: category.name,
+      description: category.description ?? "",
+      imageUrl: category.imageUrl ?? "",
+      gender: category.gender ?? "unisex",
+      sortOrder: category.sortOrder ?? 0,
+    });
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!form.name.trim()) {
+      toast.error("Category name is required.");
+      return;
+    }
+
+    const slug = form.slug.trim() || slugify(form.name);
+    await onSubmit({
+      slug,
+      name: form.name.trim(),
+      description: form.description || undefined,
+      imageUrl: form.imageUrl || undefined,
+      gender: form.gender,
+      sortOrder: form.sortOrder,
+    });
+
+    setForm(EMPTY_CATEGORY_FORM);
+  }
+
+  return (
+    <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+      <section className="rounded-[2rem] border border-border bg-card p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.24em] text-pink-500">Category Desk</p>
+            <h2 className="mt-3 text-2xl font-semibold">Shape the storefront rails</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Keep every collection organized so products land in the right customer journey.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setForm(EMPTY_CATEGORY_FORM)}
+            className="rounded-full border border-border px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:border-pink-400 hover:text-pink-500"
+          >
+            Clear
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <Label htmlFor="category-name">Category Name</Label>
+              <Input
+                id="category-name"
+                value={form.name}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    name: event.target.value,
+                    slug: current.slug || slugify(event.target.value),
+                  }))
+                }
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="category-slug">Slug</Label>
+              <Input
+                id="category-slug"
+                value={form.slug}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, slug: slugify(event.target.value) }))
+                }
+                className="mt-2"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-[1fr_180px]">
+            <div>
+              <Label htmlFor="category-image">Image URL</Label>
+              <Input
+                id="category-image"
+                value={form.imageUrl}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, imageUrl: event.target.value }))
+                }
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="category-order">Sort Order</Label>
+              <Input
+                id="category-order"
+                type="number"
+                min={0}
+                value={form.sortOrder}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    sortOrder: Number.parseInt(event.target.value || "0", 10),
+                  }))
+                }
+                className="mt-2"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="category-description">Description</Label>
+            <Textarea
+              id="category-description"
+              rows={4}
+              value={form.description}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, description: event.target.value }))
+              }
+              className="mt-2 rounded-2xl"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="category-gender">Audience</Label>
+            <select
+              id="category-gender"
+              value={form.gender}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  gender: event.target.value as "men" | "women" | "unisex",
+                }))
+              }
+              className="mt-2 w-full rounded-2xl border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400/40"
+            >
+              <option value="unisex">Unisex</option>
+              <option value="men">Men</option>
+              <option value="women">Women</option>
+            </select>
+          </div>
+
+          <Button type="submit" disabled={loading} className="w-full">
+            {loading ? "Saving Category..." : "Save Category"}
+          </Button>
+        </form>
+      </section>
+
+      <section className="rounded-[2rem] border border-border bg-card p-6">
+        <p className="text-xs uppercase tracking-[0.24em] text-pink-500">Live Collections</p>
+        <h2 className="mt-3 text-2xl font-semibold">Current category lineup</h2>
+        <div className="mt-6 grid gap-3">
+          {categories.map((category) => (
+            <div
+              key={category.id}
+              className="grid gap-4 rounded-3xl border border-border bg-background/70 p-4 md:grid-cols-[1fr_auto]"
+            >
+              <div>
+                <p className="font-semibold text-foreground">{category.name}</p>
+                <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  {category.slug}
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {category.description || "No description yet."}
+                </p>
+              </div>
+              <div className="flex items-center justify-end">
+                <Button type="button" variant="outline" onClick={() => hydrateCategory(category)}>
+                  Edit
+                </Button>
+              </div>
+            </div>
+          ))}
+          {categories.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-border px-6 py-14 text-center text-muted-foreground">
+              Categories will appear here after the first save.
+            </div>
+          ) : null}
+        </div>
       </section>
     </div>
   );

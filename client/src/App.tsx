@@ -19,6 +19,8 @@ import Account from "./pages/Account";
 import AccountOrders from "./pages/AccountOrders";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
 
@@ -42,6 +44,8 @@ function Router() {
       <Route path="/product/:slug" component={() => <Layout><ProductDetail /></Layout>} />
       <Route path="/login" component={() => <Layout><Login /></Layout>} />
       <Route path="/signup" component={() => <Layout><Signup /></Layout>} />
+      <Route path="/forgot-password" component={() => <Layout><ForgotPassword /></Layout>} />
+      <Route path="/reset-password" component={() => <Layout><ResetPassword /></Layout>} />
       
       {/* Protected Routes - require authentication */}
       <Route path="/dashboard" component={() => (

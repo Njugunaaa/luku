@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { OrdersTable, OrderDetailModal } from "@/components/admin/AdminOrderViews";
-import { InventoryManager, ManualOrderForm } from "@/components/admin/AdminForms";
+import { CategoryManager, InventoryManager, ManualOrderForm } from "@/components/admin/AdminForms";
 import {
   AdminOrder,
   AdminProduct,
@@ -124,7 +124,35 @@ export default function Admin() {
   const saveProduct = api.admin.upsertProduct.useMutation({
     onSuccess: async () => {
       toast.success("Inventory saved.");
-      await productsQuery.refetch();
+      await Promise.all([
+        productsQuery.refetch(),
+        utils.products.list.invalidate(),
+        utils.products.featured.invalidate(),
+      ]);
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const deleteProduct = api.admin.deleteProduct.useMutation({
+    onSuccess: async () => {
+      toast.success("Product deleted.");
+      await Promise.all([
+        productsQuery.refetch(),
+        utils.products.list.invalidate(),
+        utils.products.featured.invalidate(),
+        utils.cart.get.invalidate(),
+      ]);
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const saveCategory = api.admin.upsertCategory.useMutation({
+    onSuccess: async () => {
+      toast.success("Category saved.");
+      await Promise.all([
+        categoriesQuery.refetch(),
+        utils.categories.list.invalidate(),
+      ]);
     },
     onError: (error) => toast.error(error.message),
   });
@@ -146,7 +174,8 @@ export default function Admin() {
   const orders = (ordersQuery.data ?? []) as AdminOrder[];
   const allUsers = usersQuery.data ?? [];
   const allProducts = (productsQuery.data ?? []) as AdminProduct[];
-  const categories = (categoriesQuery.data ?? []).map((category) => ({
+  const rawCategories = categoriesQuery.data ?? [];
+  const categories = rawCategories.map((category) => ({
     id: category.id,
     name: category.name,
   }));
@@ -538,15 +567,30 @@ export default function Admin() {
           ) : null}
 
           {activeSection === "inventory" ? (
-            <InventoryManager
-              categories={categories}
-              products={allProducts}
-              loading={saveProduct.isPending}
-              onSubmit={async (payload) => {
-                await saveProduct.mutateAsync(payload);
-                await utils.products.list.invalidate();
-              }}
-            />
+            <div className="space-y-6">
+              <InventoryManager
+                categories={categories}
+                products={allProducts}
+                loading={saveProduct.isPending}
+                deletingProductId={
+                  deleteProduct.isPending ? deleteProduct.variables?.productId ?? null : null
+                }
+                onSubmit={async (payload) => {
+                  await saveProduct.mutateAsync(payload);
+                }}
+                onDelete={async (productId) => {
+                  await deleteProduct.mutateAsync({ productId });
+                }}
+              />
+
+              <CategoryManager
+                categories={rawCategories as any}
+                loading={saveCategory.isPending}
+                onSubmit={async (payload) => {
+                  await saveCategory.mutateAsync(payload);
+                }}
+              />
+            </div>
           ) : null}
 
           {activeSection === "customers" ? (

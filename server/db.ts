@@ -86,6 +86,19 @@ export async function getAllUsers() {
   return db.select().from(users).orderBy(desc(users.createdAt));
 }
 
+export async function updateUserPasswordByEmail(email: string, passwordHash: string) {
+  const db = await getDb();
+  if (!db) return;
+
+  await db
+    .update(users)
+    .set({
+      passwordHash,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.email, email));
+}
+
 // ─── Categories ───────────────────────────────────────────────────────────────
 
 export async function getAllCategories() {
@@ -107,7 +120,15 @@ export async function upsertCategory(data: {
 }) {
   const db = await getDb();
   if (!db) return;
-  await db.insert(categories).values(data).onDuplicateKeyUpdate({ set: { name: data.name, description: data.description, imageUrl: data.imageUrl } });
+  await db.insert(categories).values(data).onDuplicateKeyUpdate({
+    set: {
+      name: data.name,
+      description: data.description,
+      imageUrl: data.imageUrl,
+      gender: data.gender,
+      sortOrder: data.sortOrder,
+    },
+  });
 }
 
 // ─── Products ─────────────────────────────────────────────────────────────────
@@ -119,7 +140,7 @@ export async function getProducts(opts: {
   const db = await getDb();
   if (!db) return [];
 
-  const productconditions = [];
+  const productconditions: any[] = [];
   if (opts.categoryId) productconditions.push(eq(products.categoryId, opts.categoryId));
   if (opts.featured !== undefined) productconditions.push(eq(products.featured, opts.featured));
   if (opts.inStock !== undefined) productconditions.push(eq(products.inStock, opts.inStock));
@@ -178,6 +199,13 @@ export async function upsertProduct(data: typeof products.$inferInsert) {
       updatedAt: new Date(),
     }
   });
+}
+
+export async function deleteProduct(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(cartItems).where(eq(cartItems.productId, id));
+  await db.delete(products).where(eq(products.id, id));
 }
 
 // ─── Cart ─────────────────────────────────────────────────────────────────────
@@ -297,7 +325,7 @@ export async function getOrdersByUserId(userId: number) {
   const db = await getDb();
   if (!db) return [];
   const userOrders = await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
-  const result = [];
+  const result: any[] = [];
   for (const order of userOrders) {
     const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
     result.push({ ...order, items });
@@ -308,7 +336,7 @@ export async function getOrdersByUserId(userId: number) {
 export async function getAllOrders(opts: { status?: string; limit?: number; offset?: number } = {}) {
   const db = await getDb();
   if (!db) return [];
-  const productconditions = [];
+  const productconditions: any[] = [];
   if (opts.status) productconditions.push(eq(orders.status, opts.status as any));
   const query = db.select().from(orders);
   if (productconditions.length > 0) query.where(and(...productconditions));

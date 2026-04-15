@@ -23,7 +23,7 @@ class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      const isProduction = import.meta.env.PROD;
+      const isProduction = process.env.NODE_ENV === "production";
 
       return (
         <div className="flex min-h-screen items-center justify-center bg-background px-6 py-12">
