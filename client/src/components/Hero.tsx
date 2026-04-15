@@ -22,7 +22,20 @@ export default function Hero() {
     >
 
       {/* ── Video — fills section exactly, no cropping ────────────── */}
-   
+      <video
+  className="absolute inset-0 h-full w-full object-cover object-center"
+  autoPlay
+  loop
+  muted
+  playsInline
+  preload="auto"
+  poster="https://res.cloudinary.com/dgzyfeumy/video/upload/so_0,q_auto,w_960/v1776263527/vid_nvxi76.jpg"
+>
+  <source
+    src="https://res.cloudinary.com/dgzyfeumy/video/upload/q_auto,w_960/v1776263527/vid_nvxi76.mp4"
+    type="video/mp4"
+  />
+</video>
 
       {/* ── Grain — barely visible, just adds film texture ────────── */}
       <div
