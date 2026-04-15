@@ -232,11 +232,13 @@ export default function Header() {
                 >
                   {/* Sheet header */}
                   <div className={`flex items-center justify-between px-5 py-5 border-b ${isDark ? "border-white/8" : "border-black/8"}`}>
-                    <img
-                      src={isDark ? "/alivella_dark_mode.png" : "/alivella_light_mode.png"}
-                      alt="Alivella"
-                      className="h-8 w-auto object-contain"
-                    />
+                    <Link href="/" className="shrink-0 flex items-center h-full">
+              <img
+                src={isDark ? "/alivella_dark_mode1.png" : "/alivella_light_mode1.png"}
+                alt="Alivella Boutique"
+                className="h-13 w-auto object-contain hover:opacity-70 transition-opacity duration-200"
+              />
+            </Link>
                     <button
                       type="button"
                       onClick={toggleTheme}

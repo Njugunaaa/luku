@@ -22,15 +22,7 @@ export default function Hero() {
     >
 
       {/* ── Video — fills section exactly, no cropping ────────────── */}
-      <video
-        className="absolute inset-0 h-full w-full object-cover object-center"
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="auto"
-        src="/vid.mp4"
-      />
+   
 
       {/* ── Grain — barely visible, just adds film texture ────────── */}
       <div
