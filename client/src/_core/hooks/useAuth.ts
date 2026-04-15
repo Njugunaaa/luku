@@ -1,3 +1,5 @@
+"use client";
+
 import { getLoginUrl } from "@/const";
 import { ApiError, api } from "@/lib/api";
 import { useCallback, useEffect, useMemo } from "react";
@@ -38,10 +40,13 @@ export function useAuth(options?: UseAuthOptions) {
   }, [logoutMutation, utils]);
 
   const state = useMemo(() => {
-    localStorage.setItem(
-      "manus-runtime-user-info",
-      JSON.stringify(meQuery.data)
-    );
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(
+        "manus-runtime-user-info",
+        JSON.stringify(meQuery.data)
+      );
+    }
+
     return {
       user: meQuery.data ?? null,
       loading: meQuery.isLoading || logoutMutation.isPending,

@@ -1,3 +1,5 @@
+"use client";
+
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useCart } from "@/contexts/CartContext";
@@ -27,7 +29,7 @@ import {
   User,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation } from "@/lib/navigation";
 
 const NAV_LINKS = [
   { label: "Men", href: "/category/mens-collection" },

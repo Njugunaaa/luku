@@ -1,9 +1,12 @@
+"use client";
+
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { api } from "@/lib/api";
 import { motion } from "framer-motion";
 import { ArrowLeft, CheckCircle, Clock, Package, Truck, XCircle } from "lucide-react";
-import { Link } from "wouter";
+import { Link } from "@/lib/navigation";
+
 import { Badge } from "@/components/ui/badge";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof Clock }> = {

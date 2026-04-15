@@ -1,3 +1,5 @@
+"use client";
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +9,7 @@ import { redirectStore } from "@/lib/redirectStore";
 import { ApiError, api } from "@/lib/api";
 import { AlertCircle, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation } from "@/lib/navigation";
 
 export default function Login() {
   const [email, setEmail] = useState("");

@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ShoppingBag } from "lucide-react";
-import { Link } from "wouter";
+import { Link } from "@/lib/navigation";
 
 // HEADER_HEIGHT must match exactly what header.tsx exports
 const HEADER_HEIGHT = 58;

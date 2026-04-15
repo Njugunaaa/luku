@@ -1,3 +1,5 @@
+"use client";
+
 import { useAuth } from "@/_core/hooks/useAuth";
 import { OrdersTable, OrderDetailModal } from "@/components/admin/AdminOrderViews";
 import { CategoryManager, InventoryManager, ManualOrderForm } from "@/components/admin/AdminForms";
@@ -29,7 +31,7 @@ import {
   Users,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Link } from "wouter";
+import { Link } from "@/lib/navigation";
 import { toast } from "sonner";
 import {
   Bar,

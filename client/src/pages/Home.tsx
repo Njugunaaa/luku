@@ -1,3 +1,5 @@
+"use client";
+
 import Hero from "@/components/Hero";
 import ProductCard from "@/components/ProductCard";
 import { CardStack } from "@/components/ui/card-stack";
@@ -16,8 +18,8 @@ import {
   Star,
   Truck,
 } from "lucide-react";
-import { useRef } from "react";
-import { Link } from "wouter";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "@/lib/navigation";
 
 function FadeInSection({
   children,
@@ -132,6 +134,22 @@ const CAROUSEL_ITEMS = [
 
 export default function Home() {
   const { data: featuredProducts, isLoading } = api.products.featured.useQuery();
+  const [carouselSize, setCarouselSize] = useState({ width: 440, height: 300 });
+
+  useEffect(() => {
+    const updateCarouselSize = () => {
+      const isMobile = window.innerWidth < 640;
+      setCarouselSize({
+        width: isMobile ? 300 : 440,
+        height: isMobile ? 220 : 300,
+      });
+    };
+
+    updateCarouselSize();
+    window.addEventListener("resize", updateCarouselSize);
+
+    return () => window.removeEventListener("resize", updateCarouselSize);
+  }, []);
 
   return (
     <div className="min-h-screen overflow-x-clip">
@@ -294,8 +312,8 @@ export default function Home() {
 
           <CardStack
             items={CAROUSEL_ITEMS}
-            cardWidth={typeof window !== "undefined" && window.innerWidth < 640 ? 300 : 440}
-            cardHeight={typeof window !== "undefined" && window.innerWidth < 640 ? 220 : 300}
+            cardWidth={carouselSize.width}
+            cardHeight={carouselSize.height}
             autoAdvance
             intervalMs={3500}
             pauseOnHover

@@ -1,3 +1,5 @@
+"use client";
+
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -23,7 +25,7 @@ import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation } from "@/lib/navigation";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
@@ -42,14 +44,21 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [sidebarWidth, setSidebarWidth] = useState(() => {
-    const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
-    return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
-  });
+  const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_WIDTH);
   const { loading, user } = useAuth();
 
   useEffect(() => {
-    localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
+    const saved = window.localStorage.getItem(SIDEBAR_WIDTH_KEY);
+    if (!saved) return;
+
+    const parsed = parseInt(saved, 10);
+    if (Number.isFinite(parsed)) {
+      setSidebarWidth(parsed);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
   }, [sidebarWidth]);
 
   if (loading) {

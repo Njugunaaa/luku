@@ -1,3 +1,5 @@
+"use client";
+
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { useCart } from "@/contexts/CartContext";
@@ -20,7 +22,7 @@ import {
   Truck,
 } from "lucide-react";
 import { useState } from "react";
-import { Link, useParams } from "wouter";
+import { Link, useParams } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import ProductCard from "@/components/ProductCard";

@@ -1,6 +1,6 @@
 "use client";
 import { motion, useScroll, useTransform } from "framer-motion";
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 export const ContainerScroll = ({
   titleComponent,
@@ -10,19 +10,25 @@ export const ContainerScroll = ({
   children: React.ReactNode;
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [scaleRange, setScaleRange] = useState<[number, number]>([1.05, 1]);
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start end", "end start"],
   });
 
-  const scaleDimensions = () => {
-    return typeof window !== "undefined" && window.innerWidth <= 768
-      ? [0.7, 0.9]
-      : [1.05, 1];
-  };
+  useEffect(() => {
+    const updateScaleRange = () => {
+      setScaleRange(window.innerWidth <= 768 ? [0.7, 0.9] : [1.05, 1]);
+    };
+
+    updateScaleRange();
+    window.addEventListener("resize", updateScaleRange);
+
+    return () => window.removeEventListener("resize", updateScaleRange);
+  }, []);
 
   const rotate = useTransform(scrollYProgress, [0, 1], [20, 0]);
-  const scale = useTransform(scrollYProgress, [0, 1], scaleDimensions());
+  const scale = useTransform(scrollYProgress, [0, 1], scaleRange);
   const translate = useTransform(scrollYProgress, [0, 1], [0, -100]);
 
   return (

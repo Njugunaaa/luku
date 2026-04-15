@@ -1,5 +1,7 @@
+"use client";
+
 import { useMemo, useState } from "react";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation } from "@/lib/navigation";
 import { AlertCircle, ArrowLeft, Eye, EyeOff, Lock, ShieldCheck } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";

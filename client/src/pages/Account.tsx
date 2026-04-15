@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,7 +19,7 @@ import {
   ShoppingBag,
   UserRound,
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link } from "@/lib/navigation";
 
 const ACCOUNT_ACTIONS = [
   {

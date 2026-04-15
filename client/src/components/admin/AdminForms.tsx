@@ -1,3 +1,5 @@
+"use client";
+
 import { Plus, Search, Sparkles, X } from "lucide-react";
 import { type FormEvent, useMemo, useState } from "react";
 import { toast } from "sonner";

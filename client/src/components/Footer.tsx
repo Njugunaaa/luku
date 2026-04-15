@@ -1,5 +1,7 @@
+"use client";
+
 import { Instagram, Mail, MapPin, MessageCircle, Music2 } from "lucide-react";
-import { Link } from "wouter";
+import { Link } from "@/lib/navigation";
 import { useTheme } from "@/contexts/ThemeContext";
 
 const SHOP_LINKS = [

@@ -1,8 +1,10 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { LogOut, Package, ShoppingCart, User } from "lucide-react";
-import { Link } from "wouter";
+import { Link } from "@/lib/navigation";
 
 function DashboardContent() {
   const { user, logout } = useAuthContext();

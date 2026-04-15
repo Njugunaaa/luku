@@ -1,3 +1,5 @@
+"use client";
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ImageSlider } from "@/components/ui/image-slider";
@@ -8,7 +10,7 @@ import { redirectStore } from "@/lib/redirectStore";
 import { motion, type Variants } from "framer-motion";
 import { AlertCircle, ArrowRight, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation } from "@/lib/navigation";
 
 const SIGNUP_IMAGES = [
   "https://images.unsplash.com/photo-1523398002811-999ca8dec234?w=1400&q=80",

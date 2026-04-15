@@ -1,5 +1,7 @@
+"use client";
+
 import { useAuthContext } from "@/contexts/AuthContext";
-import { useLocation } from "wouter";
+import { useLocation } from "@/lib/navigation";
 import { useEffect } from "react";
 import { redirectStore } from "@/lib/redirectStore";
 

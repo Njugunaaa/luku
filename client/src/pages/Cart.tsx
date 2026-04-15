@@ -1,9 +1,12 @@
+"use client";
+
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { useCart } from "@/contexts/CartContext";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Minus, Package, Plus, ShoppingBag, Trash2 } from "lucide-react";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation } from "@/lib/navigation";
+
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 

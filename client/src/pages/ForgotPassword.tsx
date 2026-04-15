@@ -1,5 +1,7 @@
+"use client";
+
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link } from "@/lib/navigation";
 import { AlertCircle, ArrowLeft, Mail, ShieldCheck } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";

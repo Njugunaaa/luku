@@ -1,3 +1,5 @@
+"use client";
+
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { useCart } from "@/contexts/CartContext";
@@ -15,7 +17,7 @@ import {
   User,
 } from "lucide-react";
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

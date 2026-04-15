@@ -1,8 +1,10 @@
+"use client";
+
 import { api } from "@/lib/api";
 import { motion } from "framer-motion";
 import { Filter, Grid3X3, LayoutList, Search, SlidersHorizontal } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "wouter";
+import { useParams } from "@/lib/navigation";
 import ProductCard from "@/components/ProductCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
