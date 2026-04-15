@@ -19,7 +19,8 @@ type MutationOptions<TData, TVariables> = UseMutationOptions<
 
 type HttpMethod = "GET" | "POST" | "PATCH" | "DELETE";
 
-const API_TIMEOUT_MS = 15_000;
+const IS_DEV = process.env.NODE_ENV !== "production";
+const API_TIMEOUT_MS = IS_DEV ? 5 * 60_000 : 15_000;
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/+$/, "");
 
 export class ApiError extends Error {
@@ -99,7 +100,12 @@ async function request<TData>(
     return payload as TData;
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
-      throw new ApiError("The request took too long. Please try again.", 408);
+      throw new ApiError(
+        IS_DEV
+          ? "The request took too long while the local dev server was compiling. Please try again."
+          : "The request took too long. Please try again.",
+        408,
+      );
     }
 
     if (error instanceof ApiError) {

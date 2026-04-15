@@ -85,13 +85,50 @@ export default function Admin() {
   const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
   const utils = api.useUtils();
 
-  const ordersQuery = api.admin.allOrders.useQuery({});
-  const weeklySummaryQuery = api.admin.weeklySummary.useQuery();
-  const monthlySummaryQuery = api.admin.monthlySummary.useQuery();
-  const yearlySummaryQuery = api.admin.yearlySummary.useQuery();
-  const usersQuery = api.admin.allUsers.useQuery();
-  const productsQuery = api.admin.allProducts.useQuery();
-  const categoriesQuery = api.categories.list.useQuery();
+  const needsOrders =
+    activeSection === "overview" ||
+    activeSection === "current" ||
+    activeSection === "pending" ||
+    activeSection === "past" ||
+    activeSection === "surveillance" ||
+    activeSection === "manual" ||
+    activeSection === "analytics";
+  const needsSummaries = activeSection === "overview" || activeSection === "analytics";
+  const needsUsers = activeSection === "overview" || activeSection === "customers";
+  const needsProducts =
+    activeSection === "overview" ||
+    activeSection === "surveillance" ||
+    activeSection === "inventory";
+  const needsCategories = activeSection === "inventory";
+
+  const ordersQuery = api.admin.allOrders.useQuery(
+    {},
+    { enabled: needsOrders, staleTime: 30_000 },
+  );
+  const weeklySummaryQuery = api.admin.weeklySummary.useQuery({
+    enabled: needsSummaries,
+    staleTime: 30_000,
+  });
+  const monthlySummaryQuery = api.admin.monthlySummary.useQuery({
+    enabled: needsSummaries,
+    staleTime: 30_000,
+  });
+  const yearlySummaryQuery = api.admin.yearlySummary.useQuery({
+    enabled: needsSummaries,
+    staleTime: 30_000,
+  });
+  const usersQuery = api.admin.allUsers.useQuery({
+    enabled: needsUsers,
+    staleTime: 30_000,
+  });
+  const productsQuery = api.admin.allProducts.useQuery({
+    enabled: needsProducts,
+    staleTime: 30_000,
+  });
+  const categoriesQuery = api.categories.list.useQuery({
+    enabled: needsCategories,
+    staleTime: 30_000,
+  });
 
   const updateStatus = api.admin.updateOrderStatus.useMutation({
     onSuccess: async () => {
