@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import ProductCard from "@/components/ProductCard";
 
-const WHATSAPP_NUMBER = "254701887586"; // Update with actual number
+const WHATSAPP_NUMBER = "254141036864"; // Update with actual number
 
 export default function ProductDetail() {
   const params = useParams<{ slug: string }>();

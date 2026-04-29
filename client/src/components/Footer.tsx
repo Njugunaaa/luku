@@ -98,7 +98,7 @@ export default function Footer() {
               <div className="flex items-start gap-3">
                 <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-pink-500" />
                 <a
-                  href="https://wa.me/254701887586"
+                  href="https://wa.me/254141036864"
                   target="_blank"
                   rel="noreferrer"
                   className="transition-colors hover:text-pink-500"
