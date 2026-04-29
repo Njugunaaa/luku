@@ -276,57 +276,7 @@ export default function Home() {
 
           {featuredPreviewImages.length > 0 ? (
             <div className="mt-10 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-              <div className="rounded-[1.75rem] border border-border bg-card p-4 shadow-sm">
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                  {featuredPreviewImages.map((product, index) => (
-                    <motion.div
-                      key={`preview-${product.id}`}
-                      initial={{ opacity: 0, y: 18 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: index * 0.06 }}
-                    >
-                      <Link
-                        href={`/product/${product.slug}`}
-                        className="group relative block aspect-[4/5] overflow-hidden rounded-[1.35rem] bg-secondary"
-                      >
-                        <img
-                          src={product.imageUrl}
-                          alt={product.name}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
-                        <div className="absolute inset-x-0 bottom-0 p-3">
-                          <p className="line-clamp-1 text-sm font-semibold text-white">{product.name}</p>
-                          <p className="mt-1 text-[11px] uppercase tracking-[0.24em] text-white/72">
-                            {categoryNameById.get(product.categoryId) ?? "Catalog"}
-                          </p>
-                        </div>
-                      </Link>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-[1.75rem] bg-[linear-gradient(135deg,#1f2937_0%,#0f172a_100%)] p-6 text-white shadow-[0_24px_60px_-32px_rgba(15,23,42,0.5)]">
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/60">
-                  Catalog rotation
-                </p>
-                <h3 className="mt-4 font-display text-3xl font-semibold leading-tight">
-                  The homepage now refreshes from your actual stock.
-                </h3>
-                <p className="mt-4 text-sm leading-7 text-white/72">
-                  Instead of a static browse button here, shoppers now see live product imagery pulled from the catalog, with category variety built in.
-                </p>
-                <Link
-                  href={getCategoryHref(primaryCategory)}
-                  className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/12"
-                >
-                  <ArrowRight className="h-4 w-4" />
-                  Explore collections
-                </Link>
-              </div>
+              
             </div>
           ) : null}
         </div>
