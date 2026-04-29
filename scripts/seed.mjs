@@ -1,4 +1,4 @@
-import mysql from "mysql2/promise";
+import postgres from "postgres";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -722,33 +722,43 @@ const PRODUCTS = [
 ];
 
 async function seed() {
-  const connection = await mysql.createConnection(DATABASE_URL);
+  const sql = postgres(DATABASE_URL, {
+    ssl:
+      DATABASE_URL.includes("sslmode=require") ||
+      DATABASE_URL.includes("supabase.co") ||
+      DATABASE_URL.includes("supabase.com") ||
+      DATABASE_URL.includes("pooler.supabase")
+        ? "require"
+        : undefined,
+    prepare: false,
+    max: 1,
+  });
 
   try {
     console.log("Seeding categories...");
 
     for (const category of CATEGORIES) {
-      await connection.execute(
-        `INSERT INTO categories (slug, name, description, imageUrl, gender, sortOrder, createdAt)
-         VALUES (?, ?, ?, ?, ?, ?, NOW())
-         ON DUPLICATE KEY UPDATE
-           name = VALUES(name),
-           description = VALUES(description),
-           imageUrl = VALUES(imageUrl),
-           gender = VALUES(gender),
-           sortOrder = VALUES(sortOrder)`,
-        [
-          category.slug,
-          category.name,
-          category.description,
-          category.imageUrl,
-          category.gender,
-          category.sortOrder,
-        ],
-      );
+      await sql`
+        INSERT INTO categories ("slug", "name", "description", "imageUrl", "gender", "sortOrder", "createdAt")
+        VALUES (
+          ${category.slug},
+          ${category.name},
+          ${category.description},
+          ${category.imageUrl},
+          ${category.gender},
+          ${category.sortOrder},
+          NOW()
+        )
+        ON CONFLICT ("slug") DO UPDATE SET
+          "name" = EXCLUDED."name",
+          "description" = EXCLUDED."description",
+          "imageUrl" = EXCLUDED."imageUrl",
+          "gender" = EXCLUDED."gender",
+          "sortOrder" = EXCLUDED."sortOrder"
+      `;
     }
 
-    const [categoryRows] = await connection.execute("SELECT id, slug FROM categories");
+    const categoryRows = await sql`SELECT "id", "slug" FROM categories`;
     const categoryMap = new Map(categoryRows.map((row) => [row.slug, row.id]));
 
     console.log(`Seeded ${CATEGORIES.length} categories.`);
@@ -764,62 +774,61 @@ async function seed() {
         continue;
       }
 
-      await connection.execute(
-        `INSERT INTO products (
-          slug, name, description, price, originalPrice, categoryId, imageUrl, images,
-          sizes, colors, brand, productcondition, inStock, stockCount, featured, isNew,
-          tags, createdAt, updatedAt
+      await sql`
+        INSERT INTO products (
+          "slug", "name", "description", "price", "originalPrice", "categoryId", "imageUrl", "images",
+          "sizes", "colors", "brand", "productcondition", "inStock", "stockCount", "featured", "isNew",
+          "tags", "createdAt", "updatedAt"
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-        ON DUPLICATE KEY UPDATE
-          name = VALUES(name),
-          description = VALUES(description),
-          price = VALUES(price),
-          originalPrice = VALUES(originalPrice),
-          categoryId = VALUES(categoryId),
-          imageUrl = VALUES(imageUrl),
-          images = VALUES(images),
-          sizes = VALUES(sizes),
-          colors = VALUES(colors),
-          brand = VALUES(brand),
-          productcondition = VALUES(productcondition),
-          inStock = VALUES(inStock),
-          stockCount = VALUES(stockCount),
-          featured = VALUES(featured),
-          isNew = VALUES(isNew),
-          tags = VALUES(tags),
-          updatedAt = NOW()`,
-        [
-          product.slug,
-          product.name,
-          product.description,
-          product.price,
-          product.originalPrice,
-          categoryId,
-          product.imageUrl,
-          product.images,
-          product.sizes,
-          product.colors,
-          product.brand,
-          product.productcondition,
-          1,
-          product.stockCount,
-          product.featured ? 1 : 0,
-          product.isNew ? 1 : 0,
-          product.tags,
-        ],
-      );
+        VALUES (
+          ${product.slug},
+          ${product.name},
+          ${product.description},
+          ${product.price},
+          ${product.originalPrice},
+          ${categoryId},
+          ${product.imageUrl},
+          ${product.images},
+          ${product.sizes},
+          ${product.colors},
+          ${product.brand},
+          ${product.productcondition},
+          ${true},
+          ${product.stockCount},
+          ${product.featured},
+          ${product.isNew},
+          ${product.tags},
+          NOW(),
+          NOW()
+        )
+        ON CONFLICT ("slug") DO UPDATE SET
+          "name" = EXCLUDED."name",
+          "description" = EXCLUDED."description",
+          "price" = EXCLUDED."price",
+          "originalPrice" = EXCLUDED."originalPrice",
+          "categoryId" = EXCLUDED."categoryId",
+          "imageUrl" = EXCLUDED."imageUrl",
+          "images" = EXCLUDED."images",
+          "sizes" = EXCLUDED."sizes",
+          "colors" = EXCLUDED."colors",
+          "brand" = EXCLUDED."brand",
+          "productcondition" = EXCLUDED."productcondition",
+          "inStock" = EXCLUDED."inStock",
+          "stockCount" = EXCLUDED."stockCount",
+          "featured" = EXCLUDED."featured",
+          "isNew" = EXCLUDED."isNew",
+          "tags" = EXCLUDED."tags",
+          "updatedAt" = NOW()
+      `;
 
       seededCount += 1;
     }
 
-    const [counts] = await connection.execute(
-      `SELECT
-         (SELECT COUNT(*) FROM categories) AS categoryCount,
-         (SELECT COUNT(*) FROM products) AS productCount`,
-    );
-
-    const summary = counts[0];
+    const [summary] = await sql`
+      SELECT
+        (SELECT COUNT(*) FROM categories) AS "categoryCount",
+        (SELECT COUNT(*) FROM products) AS "productCount"
+    `;
 
     console.log(`Seeded ${seededCount} products.`);
     console.log(
@@ -827,7 +836,7 @@ async function seed() {
     );
     console.log("Catalog seed complete.");
   } finally {
-    await connection.end();
+    await sql.end();
   }
 }
 
