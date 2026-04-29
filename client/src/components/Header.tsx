@@ -3,6 +3,8 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useCart } from "@/contexts/CartContext";
+import { api } from "@/lib/api";
+import { filterVisibleCategories, getCategoryHref } from "@/lib/catalog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,16 +30,8 @@ import {
   Sun,
   User,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "@/lib/navigation";
-
-const NAV_LINKS = [
-  { label: "Men", href: "/category/mens-collection" },
-  { label: "Women", href: "/category/womens-collection" },
-  { label: "Shoes", href: "/category/shoes" },
-  { label: "Accessories", href: "/category/accessories" },
-  { label: "Official Wear", href: "/category/official-wear" },
-];
 
 const HEADER_HEIGHT = 58; // reduced from 72
 
@@ -46,9 +40,18 @@ export default function Header() {
   const { user, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { itemCount } = useCart();
+  const { data: categories = [] } = api.categories.list.useQuery();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const isDark = theme === "dark";
+  const navLinks = useMemo(
+    () =>
+      filterVisibleCategories(categories).map((category) => ({
+        label: category.name,
+        href: getCategoryHref(category),
+      })),
+    [categories],
+  );
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -112,7 +115,7 @@ export default function Header() {
 
             {/* ── Desktop Nav — centered ─────────────────────────────── */}
             <nav className="hidden md:flex items-center gap-0.5 mx-auto">
-              {NAV_LINKS.map((link) => (
+              {navLinks.map((link) => (
                 <Link key={link.href} href={link.href} className={navLinkClass(link.href)}>
                   {link.label}
                 </Link>
@@ -254,7 +257,7 @@ export default function Header() {
                     <p className={`px-3 pb-3 text-[11px] font-semibold uppercase tracking-widest ${isDark ? "text-white/30" : "text-black/30"}`}>
                       Shop
                     </p>
-                    {NAV_LINKS.map((link) => {
+                    {navLinks.map((link) => {
                       const active = location.startsWith(link.href);
                       return (
                         <Link

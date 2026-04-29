@@ -3,19 +3,23 @@
 import { Instagram, Mail, MapPin, MessageCircle, Music2 } from "lucide-react";
 import { Link } from "@/lib/navigation";
 import { useTheme } from "@/contexts/ThemeContext";
-
-const SHOP_LINKS = [
-  { label: "Men", href: "/category/mens-collection" },
-  { label: "Women", href: "/category/womens-collection" },
-  { label: "Shoes", href: "/category/shoes" },
-  { label: "Accessories", href: "/category/accessories" },
-  { label: "Official Wear", href: "/category/official-wear" },
-];
+import { api } from "@/lib/api";
+import { filterVisibleCategories, getCategoryHref } from "@/lib/catalog";
+import { useMemo } from "react";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const { theme } = useTheme();
+  const { data: categories = [] } = api.categories.list.useQuery();
   const isDark = theme === "dark";
+  const shopLinks = useMemo(
+    () =>
+      filterVisibleCategories(categories).map((category) => ({
+        label: category.name,
+        href: getCategoryHref(category),
+      })),
+    [categories],
+  );
 
   return (
     <footer className="border-t border-border bg-[linear-gradient(180deg,rgba(255,255,255,0),rgba(244,114,182,0.08)),radial-gradient(circle_at_top_left,rgba(251,113,133,0.08),transparent_30%)]">
@@ -67,7 +71,7 @@ export default function Footer() {
               Shop
             </h4>
             <div className="mt-4 grid gap-2.5">
-              {SHOP_LINKS.map((link) => (
+              {shopLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
