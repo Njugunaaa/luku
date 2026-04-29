@@ -1,34 +1,46 @@
 import type { NextRequest } from "next/server";
 import { NotFoundError } from "@shared/_core/errors";
-import * as db from "@server/db";
-import { parseInput } from "@server/_core/api";
+import { parseInput, toPublicUser } from "@server/_core/api";
+import { handleRouteError, json, withSessionCookie } from "@server/_core/next-route";
 import { resetPasswordSchema } from "@server/_core/schemas";
-import { verifyPasswordResetToken } from "@server/_core/passwordReset";
-import { handleRouteError, json } from "@server/_core/next-route";
+import { resolveSupabaseUserFromAuthLink } from "@server/_core/supabase-auth-link";
+import { sdk } from "@server/_core/sdk";
+import { getSupabaseAdminClient } from "@server/_core/supabase";
+import { syncAppUserFromSupabaseUser } from "@server/_core/supabase-user";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function loadBcrypt() {
-  const mod = await import("bcrypt");
-  return mod.default ?? mod;
-}
-
 export async function POST(request: NextRequest) {
   try {
     const input = parseInput(resetPasswordSchema, await request.json());
-    const email = await verifyPasswordResetToken(input.token);
-    const user = await db.getUserByEmail(email);
+    const user = await resolveSupabaseUserFromAuthLink(input);
 
-    if (!user?.email) {
+    const adminSupabase = getSupabaseAdminClient();
+    const { data, error } = await adminSupabase.auth.admin.updateUserById(user.id, {
+      password: input.password,
+      email_confirm: true,
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (!data.user) {
       throw NotFoundError("Account not found");
     }
 
-    const bcrypt = await loadBcrypt();
-    const passwordHash = await bcrypt.hash(input.password, 10);
-    await db.updateUserPasswordByEmail(user.email, passwordHash);
+    const appUser = await syncAppUserFromSupabaseUser(data.user);
+    if (!appUser) {
+      throw NotFoundError("Account not found");
+    }
 
-    return json({ success: true });
+    const token = await sdk.createSessionToken(appUser.id);
+    return withSessionCookie(
+      request,
+      json({ success: true, user: toPublicUser(appUser) }),
+      token,
+    );
   } catch (error) {
     return handleRouteError(error);
   }

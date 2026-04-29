@@ -41,15 +41,15 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.16),transparent_28%),linear-gradient(180deg,#fcfeff_0%,#eef3fb_100%)] px-4 py-8 text-slate-900 dark:bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.24),transparent_28%),linear-gradient(180deg,#030712_0%,#091120_100%)] dark:text-slate-50 sm:px-6">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(120,53,15,0.1),transparent_26%),linear-gradient(180deg,#fcfaf7_0%,#f1f4f6_100%)] px-4 py-8 text-slate-900 dark:bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.12),transparent_24%),linear-gradient(180deg,#111315_0%,#171a1f_100%)] dark:text-slate-50 sm:px-6">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-3xl items-center justify-center">
-        <section className="w-full rounded-[2rem] border border-slate-200/80 bg-white/96 p-8 shadow-[0_30px_120px_rgba(15,23,42,0.12)] dark:border-slate-800/80 dark:bg-[#07111f]/96 sm:p-10">
+        <section className="w-full rounded-[2rem] border border-slate-200/80 bg-white/96 p-8 shadow-[0_30px_120px_rgba(15,23,42,0.12)] dark:border-white/8 dark:bg-[#111315]/96 sm:p-10">
           <div className="flex items-center gap-3">
-            <div className="rounded-2xl bg-blue-100 p-3 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+            <div className="rounded-2xl bg-[#f7efe6] p-3 text-[#8c6239] dark:bg-[#231c16] dark:text-[#e6c6a4]">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-blue-600 dark:text-blue-300">
+              <p className="text-xs uppercase tracking-[0.3em] text-[#8c6239] dark:text-[#ddb68c]">
                 Password reset
               </p>
               <h1 className="mt-2 text-3xl font-semibold text-slate-950 dark:text-white">
@@ -63,16 +63,16 @@ export default function ForgotPassword() {
           </p>
 
           {submitted ? (
-            <div className="mt-8 space-y-4 rounded-[1.5rem] border border-blue-100 bg-blue-50/80 p-6 dark:border-blue-900/60 dark:bg-blue-950/30">
+            <div className="mt-8 space-y-4 rounded-[1.5rem] border border-[#e8d7c4] bg-[#fbf4eb] p-6 dark:border-[#3b3025] dark:bg-[#171411]">
               <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                If an account exists for that email, reset instructions are on the way.
+                If an account exists for that email, reset instructions are ready.
               </p>
               <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
-                If email delivery is not configured in this environment yet, the reset link will still be prepared on the server side for setup and testing.
+                Supabase will send the password reset email directly to that inbox. Open the link there to choose a new password.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Link href="/login">
-                  <Button className="rounded-2xl bg-blue-600 text-white hover:bg-blue-700">
+                  <Button className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800 dark:bg-[#f4efe7] dark:text-slate-950 dark:hover:bg-[#ece4d9]">
                     Back to sign in
                   </Button>
                 </Link>
@@ -109,7 +109,7 @@ export default function ForgotPassword() {
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     autoComplete="email"
-                    className="h-12 rounded-2xl border-slate-200 bg-white pl-11 dark:border-slate-800 dark:bg-slate-950"
+                    className="h-12 rounded-2xl border-slate-200 bg-white pl-11 dark:border-white/8 dark:bg-[#16191d]"
                   />
                 </div>
               </div>
@@ -117,7 +117,7 @@ export default function ForgotPassword() {
               <Button
                 type="submit"
                 disabled={forgotPasswordMutation.isPending}
-                className="h-12 w-full rounded-2xl bg-blue-600 text-base font-semibold text-white hover:bg-blue-700"
+                className="h-12 w-full rounded-2xl bg-slate-950 text-base font-semibold text-white hover:bg-slate-800 dark:bg-[#f4efe7] dark:text-slate-950 dark:hover:bg-[#ece4d9]"
               >
                 {forgotPasswordMutation.isPending ? "Preparing reset..." : "Send reset instructions"}
               </Button>
@@ -126,7 +126,7 @@ export default function ForgotPassword() {
 
           <Link
             href="/login"
-            className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-300"
+            className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-950 dark:text-slate-300 dark:hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to sign in

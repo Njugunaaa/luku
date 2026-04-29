@@ -17,6 +17,25 @@ function firstHeaderValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function getConfiguredAppUrl() {
+  const configuredUrl =
+    process.env.APP_URL?.trim() ||
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() ||
+    "";
+
+  if (!configuredUrl) {
+    return "";
+  }
+
+  const normalizedUrl = configuredUrl.startsWith("http")
+    ? configuredUrl
+    : `https://${configuredUrl}`;
+
+  return normalizedUrl.replace(/\/+$/, "");
+}
+
 export async function createPasswordResetToken(email: string) {
   const issuedAt = Date.now();
   const expirationSeconds = Math.floor((issuedAt + RESET_TOKEN_TTL_MS) / 1000);
@@ -51,11 +70,17 @@ export async function verifyPasswordResetToken(token: string) {
 }
 
 export function buildPasswordResetUrl(req: NextApiRequest, token: string) {
+  const pathname = `/reset-password?token=${encodeURIComponent(token)}`;
+  const configuredAppUrl = getConfiguredAppUrl();
+
+  if (configuredAppUrl) {
+    return `${configuredAppUrl}${pathname}`;
+  }
+
   const proto = firstHeaderValue(req.headers["x-forwarded-proto"]) ?? "http";
   const host =
     firstHeaderValue(req.headers["x-forwarded-host"]) ??
     firstHeaderValue(req.headers.host);
-  const pathname = `/reset-password?token=${encodeURIComponent(token)}`;
 
   if (!host) {
     return pathname;
@@ -63,4 +88,3 @@ export function buildPasswordResetUrl(req: NextApiRequest, token: string) {
 
   return `${proto}://${host}${pathname}`;
 }
-

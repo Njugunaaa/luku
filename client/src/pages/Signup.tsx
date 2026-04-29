@@ -6,11 +6,10 @@ import { ImageSlider } from "@/components/ui/image-slider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApiError, api } from "@/lib/api";
-import { redirectStore } from "@/lib/redirectStore";
 import { motion, type Variants } from "framer-motion";
-import { AlertCircle, ArrowRight, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
+import { AlertCircle, ArrowRight, Eye, EyeOff, Lock, Mail, MailCheck, User } from "lucide-react";
 import { useState } from "react";
-import { Link, useLocation } from "@/lib/navigation";
+import { Link } from "@/lib/navigation";
 
 const SIGNUP_IMAGES = [
   "https://images.unsplash.com/photo-1523398002811-999ca8dec234?w=1400&q=80",
@@ -52,13 +51,13 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [, setLocation] = useLocation();
-
-  const utils = api.useContext();
+  const [submitted, setSubmitted] = useState(false);
 
   const signupMutation = api.auth.signup.useMutation({
     onSuccess: () => {
-      loginMutation.mutate({ email, password });
+      setSubmitted(true);
+      setError(null);
+      setLoading(false);
     },
     onError: (err) => {
       if (err instanceof ApiError && err.status >= 500) {
@@ -74,25 +73,6 @@ export default function Signup() {
         setError("The live site API is misconfigured right now. Please redeploy after updating the Vercel settings.");
       } else {
         setError(err.message || "Signup failed");
-      }
-      setLoading(false);
-    },
-  });
-
-  const loginMutation = api.auth.login.useMutation({
-    onSuccess: async (user) => {
-      utils.auth.me.setData(undefined, user);
-      await utils.auth.me.invalidate();
-      const redirectUrl = redirectStore.consumeForSignedInUser("/dashboard");
-      setLocation(redirectUrl);
-    },
-    onError: (err) => {
-      if (err.message.includes("too long")) {
-        setError("Account created, but the sign-in step timed out. Please sign in manually.");
-      } else if (err.message.includes("invalid response")) {
-        setError("Account created, but the live site API is misconfigured. Please sign in again after redeploying.");
-      } else {
-        setError("Signup succeeded, but auto-login failed. Please sign in manually.");
       }
       setLoading(false);
     },
@@ -201,124 +181,162 @@ export default function Signup() {
               variants={itemVariants}
               className="mt-4 text-sm leading-7 text-muted-foreground"
             >
-              Save your details, track orders, and keep your favorite finds one step away.
+              Save your details, track orders, and keep your favorite finds one step away. New accounts now need email confirmation before the first sign-in.
             </motion.p>
 
-            <motion.form variants={itemVariants} onSubmit={handleSubmit} className="mt-8 space-y-5">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="name">Full name</Label>
-                <div className="relative">
-                  <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="Your full name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="pl-10"
-                    disabled={loading}
-                    autoComplete="name"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                    disabled={loading}
-                    autoComplete="email"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <span className="text-xs font-medium text-muted-foreground">At least 6 characters</span>
-                </div>
-                <div className="relative">
-                  <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Create a password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10"
-                    disabled={loading}
-                    autoComplete="new-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    disabled={loading}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                {password && (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs font-medium">
-                      <span className="text-muted-foreground">Strength</span>
-                      <span className="text-foreground">{passwordStrengthLabel}</span>
-                    </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-                      <div
-                        className={`h-full ${passwordStrengthClass} transition-all duration-300`}
-                        style={{ width: `${passwordStrength * 100}%` }}
-                      />
-                    </div>
+            {submitted ? (
+              <motion.div
+                variants={itemVariants}
+                className="mt-8 space-y-5 rounded-[1.75rem] border border-border bg-secondary/40 p-6"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="rounded-2xl bg-red-500/10 p-3 text-red-500">
+                    <MailCheck className="h-5 w-5" />
                   </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm password</Label>
-                <div className="relative">
-                  <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="Repeat your password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pl-10 pr-10"
-                    disabled={loading}
-                    autoComplete="new-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    disabled={loading}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                  >
-                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Check your email to finish signup</p>
+                    <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                      We sent a verification link to your inbox through Supabase. Open it to confirm your account and finish activating sign-in.
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              <Button type="submit" disabled={loading} className="h-11 w-full text-base font-semibold">
-                {loading ? "Creating account..." : "Create account"}
-              </Button>
-            </motion.form>
+                <div className="flex flex-wrap gap-3">
+                  <Link href="/login">
+                    <Button variant="outline" className="h-11 text-base font-semibold">
+                      Back to sign in
+                    </Button>
+                  </Link>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setSubmitted(false);
+                      setError(null);
+                    }}
+                    className="h-11 text-base font-semibold"
+                  >
+                    Use another email
+                  </Button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.form variants={itemVariants} onSubmit={handleSubmit} className="mt-8 space-y-5">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full name</Label>
+                  <div className="relative">
+                    <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="name"
+                      type="text"
+                      placeholder="Your full name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="pl-10"
+                      disabled={loading}
+                      autoComplete="name"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10"
+                      disabled={loading}
+                      autoComplete="email"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Password</Label>
+                    <span className="text-xs font-medium text-muted-foreground">At least 6 characters</span>
+                  </div>
+                  <div className="relative">
+                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Create a password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10 pr-10"
+                      disabled={loading}
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      disabled={loading}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {password && (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs font-medium">
+                        <span className="text-muted-foreground">Strength</span>
+                        <span className="text-foreground">{passwordStrengthLabel}</span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                        <div
+                          className={`h-full ${passwordStrengthClass} transition-all duration-300`}
+                          style={{ width: `${passwordStrength * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm password</Label>
+                  <div className="relative">
+                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Repeat your password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="pl-10 pr-10"
+                      disabled={loading}
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      disabled={loading}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <Button type="submit" disabled={loading} className="h-11 w-full text-base font-semibold">
+                  {loading ? "Creating account..." : "Create account"}
+                </Button>
+              </motion.form>
+            )}
 
             <motion.div
               variants={itemVariants}

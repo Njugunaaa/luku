@@ -1,4 +1,3 @@
-import crypto from "crypto";
 import type { NextRequest } from "next/server";
 import { UnauthorizedError } from "@shared/_core/errors";
 import * as db from "@server/db";
@@ -10,7 +9,10 @@ import {
   json,
   withSessionCookie,
 } from "@server/_core/next-route";
+import { readGuestId } from "@server/_core/guest-session";
 import { sdk } from "@server/_core/sdk";
+import { getSupabaseAdminClient, getSupabaseAuthClient } from "@server/_core/supabase";
+import { syncAppUserFromSupabaseUser } from "@server/_core/supabase-user";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,50 +26,82 @@ export async function POST(request: NextRequest) {
   try {
     await getOptionalUser(request);
     const input = parseInput(authCredentialsSchema, await request.json());
-    const bcrypt = await loadBcrypt();
-    const adminEmail = process.env.ADMIN_EMAIL ?? "admin@alivellaboutique.com";
-    const adminPassword = process.env.ADMIN_PASSWORD ?? "Password123!";
-    const adminName = process.env.ADMIN_NAME ?? "Joshua";
+    const supabase = getSupabaseAuthClient();
 
-    let user = await db.getUserByEmail(input.email);
+    let signInResult = await supabase.auth.signInWithPassword({
+      email: input.email,
+      password: input.password,
+    });
 
-    if (input.email === adminEmail && input.password === adminPassword) {
-      if (!user) {
-        const openId = crypto.randomUUID();
-        const hash = await bcrypt.hash(crypto.randomUUID(), 10);
-        await db.upsertUser({
-          openId,
-          email: input.email,
-          name: adminName,
-          passwordHash: hash,
-          role: "admin",
-        } as any);
-        user = await db.getUserByEmail(input.email);
-      } else if (user.role !== "admin") {
-        await db.upsertUser({
-          ...user,
-          role: "admin",
-        } as any);
-        user = await db.getUserByEmail(input.email);
-      }
-    } else {
-      if (!user || !user.passwordHash) {
-        throw UnauthorizedError("Invalid credentials");
-      }
+    if (signInResult.error) {
+      const migratedSignInResult = await tryMigrateLegacyPasswordUser(
+        input.email,
+        input.password,
+        supabase,
+      );
 
-      const matches = await bcrypt.compare(input.password, user.passwordHash as string);
-      if (!matches) {
-        throw UnauthorizedError("Invalid credentials");
+      if (migratedSignInResult) {
+        signInResult = migratedSignInResult;
       }
     }
 
-    if (!user) {
+    if (signInResult.error || !signInResult.data.user) {
       throw UnauthorizedError("Invalid credentials");
     }
 
-    const token = await sdk.createSessionToken(user.id);
-    return withSessionCookie(request, json(toPublicUser(user)), token);
+    const appUser = await syncAppUserFromSupabaseUser(signInResult.data.user);
+    if (!appUser) {
+      throw UnauthorizedError("Unable to load account");
+    }
+
+    const guestId = readGuestId(request);
+    if (guestId) {
+      await db.claimGuestData(guestId, appUser.id);
+    }
+
+    const token = await sdk.createSessionToken(appUser.id);
+    return withSessionCookie(request, json(toPublicUser(appUser)), token);
   } catch (error) {
     return handleRouteError(error);
   }
+}
+
+async function tryMigrateLegacyPasswordUser(
+  email: string,
+  password: string,
+  supabase: ReturnType<typeof getSupabaseAuthClient>,
+) {
+  const existingUser = await db.getUserByEmail(email);
+  if (!existingUser?.passwordHash) {
+    return null;
+  }
+
+  const bcrypt = await loadBcrypt();
+  const matches = await bcrypt.compare(password, existingUser.passwordHash);
+  if (!matches) {
+    return null;
+  }
+
+  const adminSupabase = getSupabaseAdminClient();
+  const createUserResult = await adminSupabase.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: {
+      name: existingUser.name ?? "",
+    },
+  });
+
+  if (
+    createUserResult.error &&
+    !createUserResult.error.message.toLowerCase().includes("already") &&
+    !createUserResult.error.message.toLowerCase().includes("exists")
+  ) {
+    throw createUserResult.error;
+  }
+
+  return supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 }

@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import * as db from "@server/db";
 import { parseInput } from "@server/_core/api";
+import { attachGuestCookie, resolveShopperIdentity } from "@server/_core/guest-session";
 import { websiteOrderSchema } from "@server/_core/schemas";
 import { getOptionalUser, handleRouteError, json, requireUser } from "@server/_core/next-route";
 
@@ -18,7 +19,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = requireUser(await getOptionalUser(request));
+    const user = await getOptionalUser(request);
+    const shopper = user
+      ? { kind: "user" as const, userId: user.id }
+      : await resolveShopperIdentity(request);
     const input = parseInput(websiteOrderSchema, await request.json());
     const subtotal = input.items.reduce(
       (sum, item) => sum + Number.parseFloat(item.price) * item.quantity,
@@ -29,7 +33,8 @@ export async function POST(request: NextRequest) {
 
     const order = await db.createOrder(
       {
-        userId: user.id,
+        userId: user?.id ?? null,
+        guestId: shopper.kind === "guest" ? shopper.guestId : null,
         customerName: input.customerName,
         customerEmail: input.customerEmail,
         customerPhone: input.customerPhone,
@@ -45,8 +50,13 @@ export async function POST(request: NextRequest) {
       input.items,
     );
 
-    await db.clearCart(user.id);
-    return json(order, { status: 201 });
+    await db.clearCart(
+      shopper.kind === "user"
+        ? { userId: shopper.userId }
+        : { guestId: shopper.guestId },
+    );
+
+    return attachGuestCookie(request, json(order, { status: 201 }), shopper);
   } catch (error) {
     return handleRouteError(error);
   }
