@@ -103,7 +103,7 @@ export function ManualOrderForm({ loading, onSubmit }: ManualOrderFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <section className="rounded-[2rem] border border-border bg-card p-6">
-        <p className="text-xs uppercase tracking-[0.24em] text-pink-500">Manual Intake</p>
+        <p className="text-xs uppercase tracking-[0.24em] text-[#8c6239] dark:text-[#ddb68c]">Manual Intake</p>
         <h2 className="mt-3 text-2xl font-semibold">Book a WhatsApp or in-person order</h2>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           Capture customer orders exactly as they arrive so stock, delivery, and revenue reporting stay clean.
@@ -158,7 +158,7 @@ export function ManualOrderForm({ loading, onSubmit }: ManualOrderFormProps) {
                   source: event.target.value as "whatsapp" | "manual",
                 }))
               }
-              className="mt-2 w-full rounded-2xl border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400/40"
+              className="mt-2 w-full rounded-2xl border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300/60 dark:focus:ring-white/20"
             >
               <option value="whatsapp">WhatsApp</option>
               <option value="manual">Manual / In-person</option>
@@ -178,7 +178,7 @@ export function ManualOrderForm({ loading, onSubmit }: ManualOrderFormProps) {
                   needsDelivery: event.target.checked,
                 }))
               }
-              className="h-4 w-4 rounded border-border accent-pink-500"
+              className="h-4 w-4 rounded border-border accent-stone-700"
             />
             <Label htmlFor="manual-delivery">Customer needs delivery</Label>
           </div>
@@ -313,7 +313,7 @@ export function ManualOrderForm({ loading, onSubmit }: ManualOrderFormProps) {
                         current.filter((_, itemIndex) => itemIndex !== index),
                       )
                     }
-                    className="rounded-full border border-border p-3 text-muted-foreground transition-colors hover:border-pink-400 hover:text-pink-500"
+                    className="rounded-full border border-border p-3 text-muted-foreground transition-colors hover:border-stone-300 hover:text-slate-950 dark:hover:border-white/20 dark:hover:text-white"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -326,7 +326,7 @@ export function ManualOrderForm({ loading, onSubmit }: ManualOrderFormProps) {
         <div className="mt-6 flex flex-col gap-4 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Estimated total</p>
-            <p className="mt-1 text-2xl font-semibold text-foreground">{formatCurrency(estimatedTotal)}</p>
+            <p className="mt-1 text-2xl font-semibold text-[#8c6239] dark:text-[#ddb68c]">{formatCurrency(estimatedTotal)}</p>
           </div>
           <Button type="submit" disabled={loading} className="sm:min-w-[220px]">
             {loading ? "Creating Order..." : "Create Manual Order"}
@@ -496,7 +496,7 @@ export function InventoryManager({
       <section className="rounded-[2rem] border border-border bg-card p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.24em] text-pink-500">Inventory Desk</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-[#8c6239] dark:text-[#ddb68c]">Inventory Desk</p>
             <h2 className="mt-3 text-2xl font-semibold">Manage available stock</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Search catalog items, spot low stock, and load a product back into the editor.
@@ -534,18 +534,18 @@ export function InventoryManager({
                 </p>
               </div>
               <div className="space-y-2 text-sm">
-                <p className="font-semibold text-foreground">{formatCurrency(product.price)}</p>
+                <p className="font-semibold text-[#8c6239] dark:text-[#ddb68c]">{formatCurrency(product.price)}</p>
                 <div className="flex flex-wrap gap-2">
                   <span className="rounded-full bg-secondary px-3 py-1 text-xs">
                     {product.inStock ? "Live" : "Paused"}
                   </span>
                   {(product.stockCount ?? 0) <= 3 ? (
-                    <span className="rounded-full bg-pink-500/15 px-3 py-1 text-xs text-pink-600 dark:text-pink-200">
+                    <span className="rounded-full bg-[#f7efe6] px-3 py-1 text-xs text-[#8c6239] dark:bg-[#231c16] dark:text-[#e6c6a4]">
                       Low stock
                     </span>
                   ) : null}
                   {product.featured ? (
-                    <span className="rounded-full bg-fuchsia-500/15 px-3 py-1 text-xs text-fuchsia-600 dark:text-fuchsia-200">
+                    <span className="rounded-full bg-stone-200/80 px-3 py-1 text-xs text-slate-700 dark:bg-white/8 dark:text-slate-100">
                       Featured
                     </span>
                   ) : null}
@@ -584,13 +584,13 @@ export function InventoryManager({
       <section className="rounded-[2rem] border border-border bg-card p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.24em] text-pink-500">Product Editor</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-[#8c6239] dark:text-[#ddb68c]">Product Editor</p>
             <h2 className="mt-3 text-2xl font-semibold">Add or refresh inventory</h2>
           </div>
           <button
             type="button"
             onClick={() => setForm(EMPTY_PRODUCT_FORM)}
-            className="rounded-full border border-border px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:border-pink-400 hover:text-pink-500"
+            className="rounded-full border border-border px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:border-stone-300 hover:text-slate-950 dark:hover:border-white/20 dark:hover:text-white"
           >
             Clear
           </button>
@@ -636,7 +636,7 @@ export function InventoryManager({
                     categoryId: Number.parseInt(event.target.value, 10),
                   }))
                 }
-                className="mt-2 w-full rounded-2xl border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400/40"
+                className="mt-2 w-full rounded-2xl border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300/60 dark:focus:ring-white/20"
               >
                 <option value={0}>Select a category</option>
                 {categories.map((category) => (
@@ -717,7 +717,7 @@ export function InventoryManager({
                   Pick an image from your phone or computer and it will be attached directly to this product.
                 </p>
               </div>
-              <label className="inline-flex cursor-pointer items-center justify-center rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition-colors hover:border-pink-400 hover:text-pink-500">
+              <label className="inline-flex cursor-pointer items-center justify-center rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition-colors hover:border-stone-300 hover:text-slate-950 dark:hover:border-white/20 dark:hover:text-white">
                 <input
                   type="file"
                   accept="image/*"
@@ -769,7 +769,7 @@ export function InventoryManager({
                       | "fair",
                   }))
                 }
-                className="mt-2 w-full rounded-2xl border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400/40"
+                className="mt-2 w-full rounded-2xl border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300/60 dark:focus:ring-white/20"
               >
                 {PRODUCT_CONDITION_OPTIONS.map((option) => (
                   <option key={option} value={option}>
@@ -804,7 +804,7 @@ export function InventoryManager({
                 onChange={(event) =>
                   setForm((current) => ({ ...current, inStock: event.target.checked }))
                 }
-                className="h-4 w-4 rounded border-border accent-pink-500"
+                className="h-4 w-4 rounded border-border accent-stone-700"
               />
               In stock
             </label>
@@ -815,7 +815,7 @@ export function InventoryManager({
                 onChange={(event) =>
                   setForm((current) => ({ ...current, featured: event.target.checked }))
                 }
-                className="h-4 w-4 rounded border-border accent-pink-500"
+                className="h-4 w-4 rounded border-border accent-stone-700"
               />
               Featured
             </label>
@@ -828,7 +828,7 @@ export function InventoryManager({
               onChange={(event) =>
                 setForm((current) => ({ ...current, isNew: event.target.checked }))
               }
-              className="h-4 w-4 rounded border-border accent-pink-500"
+              className="h-4 w-4 rounded border-border accent-stone-700"
             />
             Mark as new arrival
           </label>
@@ -872,7 +872,7 @@ export function InventoryManager({
             </div>
           </div>
 
-          <div className="rounded-3xl border border-pink-400/20 bg-pink-500/10 p-4 text-sm text-pink-700 dark:text-pink-200">
+          <div className="rounded-3xl border border-[#dac2aa] bg-[#f7efe6] p-4 text-sm text-[#8c6239] dark:border-[#3b3025] dark:bg-[#231c16] dark:text-[#e6c6a4]">
             <p className="flex items-center gap-2 font-medium">
               <Sparkles className="h-4 w-4" />
               Tip
@@ -967,7 +967,7 @@ export function CategoryManager({
       <section className="rounded-[2rem] border border-border bg-card p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.24em] text-pink-500">Category Desk</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-[#8c6239] dark:text-[#ddb68c]">Category Desk</p>
             <h2 className="mt-3 text-2xl font-semibold">Shape the storefront rails</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Keep every collection organized so products land in the right customer journey.
@@ -976,7 +976,7 @@ export function CategoryManager({
           <button
             type="button"
             onClick={() => setForm(EMPTY_CATEGORY_FORM)}
-            className="rounded-full border border-border px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:border-pink-400 hover:text-pink-500"
+            className="rounded-full border border-border px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:border-stone-300 hover:text-slate-950 dark:hover:border-white/20 dark:hover:text-white"
           >
             Clear
           </button>
@@ -1066,7 +1066,7 @@ export function CategoryManager({
                   gender: event.target.value as "men" | "women" | "unisex",
                 }))
               }
-              className="mt-2 w-full rounded-2xl border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400/40"
+              className="mt-2 w-full rounded-2xl border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300/60 dark:focus:ring-white/20"
             >
               <option value="unisex">Unisex</option>
               <option value="men">Men</option>
@@ -1081,7 +1081,7 @@ export function CategoryManager({
       </section>
 
       <section className="rounded-[2rem] border border-border bg-card p-6">
-        <p className="text-xs uppercase tracking-[0.24em] text-pink-500">Live Collections</p>
+        <p className="text-xs uppercase tracking-[0.24em] text-[#8c6239] dark:text-[#ddb68c]">Live Collections</p>
         <h2 className="mt-3 text-2xl font-semibold">Current category lineup</h2>
         <div className="mt-6 grid gap-3">
           {categories.map((category) => (

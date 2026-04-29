@@ -1,9 +1,18 @@
 "use client";
 
-import React, { createContext, useCallback, useContext } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
+
+export type CartProductSnapshot = {
+  id: number;
+  name: string;
+  price: string;
+  imageUrl: string;
+  slug: string;
+  inStock: boolean;
+};
 
 export type CartItemLocal = {
   id: number;
@@ -26,7 +35,14 @@ type CartContextValue = {
   itemCount: number;
   subtotal: number;
   isLoading: boolean;
-  addItem: (productId: number, quantity: number, selectedSize?: string, selectedColor?: string) => Promise<void>;
+  cartMode: "guest" | "account";
+  addItem: (
+    productId: number,
+    quantity: number,
+    selectedSize?: string,
+    selectedColor?: string,
+    product?: CartProductSnapshot,
+  ) => Promise<void>;
   updateItem: (itemId: number, quantity: number) => Promise<void>;
   removeItem: (itemId: number) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -40,61 +56,98 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const utils = api.useUtils();
 
   const { data: cartData, isLoading, refetch } = api.cart.get.useQuery(undefined, {
-    enabled: isAuthenticated,
     staleTime: 30_000,
   });
 
   const addMutation = api.cart.add.useMutation({
-    onSuccess: () => { utils.cart.get.invalidate(); },
+    onSuccess: () => {
+      utils.cart.get.invalidate();
+    },
     onError: (err) => toast.error(err.message),
   });
 
   const updateMutation = api.cart.update.useMutation({
-    onSuccess: () => { utils.cart.get.invalidate(); },
+    onSuccess: () => {
+      utils.cart.get.invalidate();
+    },
     onError: (err) => toast.error(err.message),
   });
 
   const removeMutation = api.cart.remove.useMutation({
-    onSuccess: () => { utils.cart.get.invalidate(); },
+    onSuccess: () => {
+      utils.cart.get.invalidate();
+    },
     onError: (err) => toast.error(err.message),
   });
 
   const clearMutation = api.cart.clear.useMutation({
-    onSuccess: () => { utils.cart.get.invalidate(); },
+    onSuccess: () => {
+      utils.cart.get.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
   });
 
-  const items: CartItemLocal[] = (cartData as CartItemLocal[] | undefined) ?? [];
+  useEffect(() => {
+    void refetch();
+  }, [isAuthenticated, refetch]);
+
+  const items = useMemo(() => ((cartData as CartItemLocal[] | undefined) ?? []), [cartData]);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  const subtotal = items.reduce((sum, item) => sum + parseFloat(item.product.price) * item.quantity, 0);
+  const subtotal = items.reduce(
+    (sum, item) => sum + parseFloat(item.product.price) * item.quantity,
+    0,
+  );
 
-  const addItem = useCallback(async (productId: number, quantity: number, selectedSize?: string, selectedColor?: string) => {
-    await addMutation.mutateAsync({ productId, quantity, selectedSize, selectedColor });
-  }, [addMutation]);
+  const addItem = useCallback(
+    async (
+      productId: number,
+      quantity: number,
+      selectedSize?: string,
+      selectedColor?: string,
+      _product?: CartProductSnapshot,
+    ) => {
+      await addMutation.mutateAsync({ productId, quantity, selectedSize, selectedColor });
+    },
+    [addMutation],
+  );
 
-  const updateItem = useCallback(async (itemId: number, quantity: number) => {
-    await updateMutation.mutateAsync({ itemId, quantity });
-  }, [updateMutation]);
+  const updateItem = useCallback(
+    async (itemId: number, quantity: number) => {
+      await updateMutation.mutateAsync({ itemId, quantity });
+    },
+    [updateMutation],
+  );
 
-  const removeItem = useCallback(async (itemId: number) => {
-    await removeMutation.mutateAsync({ itemId });
-  }, [removeMutation]);
+  const removeItem = useCallback(
+    async (itemId: number) => {
+      await removeMutation.mutateAsync({ itemId });
+    },
+    [removeMutation],
+  );
 
   const clearCartFn = useCallback(async () => {
     await clearMutation.mutateAsync();
   }, [clearMutation]);
 
+  const cartMode = useMemo(() => (isAuthenticated ? "account" : "guest"), [isAuthenticated]);
+
   return (
-    <CartContext.Provider value={{
-      items,
-      itemCount,
-      subtotal,
-      isLoading,
-      addItem,
-      updateItem,
-      removeItem,
-      clearCart: clearCartFn,
-      refetch,
-    }}>
+    <CartContext.Provider
+      value={{
+        items,
+        itemCount,
+        subtotal,
+        isLoading,
+        cartMode,
+        addItem,
+        updateItem,
+        removeItem,
+        clearCart: clearCartFn,
+        refetch: () => {
+          void refetch();
+        },
+      }}
+    >
       {children}
     </CartContext.Provider>
   );

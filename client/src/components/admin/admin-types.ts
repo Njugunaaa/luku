@@ -78,10 +78,10 @@ export const PRODUCT_CONDITION_OPTIONS = [
 
 export const STATUS_COLORS: Record<string, string> = {
   pending: "bg-amber-500/15 text-amber-700 dark:text-amber-200",
-  confirmed: "bg-pink-500/15 text-pink-700 dark:text-pink-200",
+  confirmed: "bg-sky-500/15 text-sky-700 dark:text-sky-200",
   paid: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-200",
-  processing: "bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-200",
-  shipped: "bg-rose-500/15 text-rose-700 dark:text-rose-200",
+  processing: "bg-blue-500/15 text-blue-700 dark:text-blue-200",
+  shipped: "bg-cyan-500/15 text-cyan-700 dark:text-cyan-200",
   delivered: "bg-green-500/15 text-green-700 dark:text-green-200",
   cancelled: "bg-red-500/15 text-red-700 dark:text-red-200",
 };

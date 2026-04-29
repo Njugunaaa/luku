@@ -3,6 +3,7 @@ type TransactionalEmailInput = {
   subject: string;
   html: string;
   text: string;
+  replyTo?: string;
 };
 
 type TransactionalEmailResult = {
@@ -19,6 +20,10 @@ function getEmailFrom() {
     process.env.RESEND_FROM?.trim() ??
     "Alivella Boutique <onboarding@resend.dev>"
   );
+}
+
+function getEmailReplyTo() {
+  return process.env.EMAIL_REPLY_TO?.trim() ?? "";
 }
 
 export function isEmailDeliveryConfigured() {
@@ -50,6 +55,7 @@ export async function sendTransactionalEmail(
       subject: input.subject,
       html: input.html,
       text: input.text,
+      reply_to: input.replyTo?.trim() || getEmailReplyTo() || undefined,
     }),
   });
 

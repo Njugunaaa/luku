@@ -24,7 +24,7 @@ export default function Login() {
   const loginMutation = api.auth.login.useMutation({
     onSuccess: async (user) => {
       utils.auth.me.setData(undefined, user);
-      await utils.auth.me.invalidate();
+      await Promise.all([utils.auth.me.invalidate(), utils.cart.get.invalidate()]);
       const redirectUrl = redirectStore.consumeForSignedInUser("/dashboard");
       setLocation(redirectUrl);
     },
@@ -33,6 +33,8 @@ export default function Login() {
         setError("Unable to reach authentication service - please try again later.");
       } else if (err instanceof ApiError && err.status === 401) {
         setError("Invalid email or password. Please try again.");
+      } else if (err instanceof ApiError && err.status === 403) {
+        setError(err.message || "Please verify your email before signing in.");
       } else if (err.message.includes("too long")) {
         setError("Sign in timed out. Please try again in a moment.");
       } else if (err.message.includes("invalid response")) {
@@ -105,9 +107,17 @@ export default function Login() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">
-                Password
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-sm font-medium">
+                  Password
+                </Label>
+                <Link
+                  href="/forgot-password"
+                  className="text-xs font-medium text-primary transition-colors hover:text-primary/80 hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <div className="relative">
                 <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input

@@ -1,7 +1,5 @@
 "use client";
 
-import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { useCart } from "@/contexts/CartContext";
 import { Heart, ShoppingBag } from "lucide-react";
 import { useState } from "react";
@@ -28,7 +26,6 @@ type Props = {
 };
 
 export default function ProductCard({ product, className = "" }: Props) {
-  const { isAuthenticated } = useAuth();
   const { addItem } = useCart();
   const [adding, setAdding] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
@@ -40,14 +37,17 @@ export default function ProductCard({ product, className = "" }: Props) {
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isAuthenticated) {
-      window.location.href = getLoginUrl();
-      return;
-    }
     if (!product.inStock) return;
     setAdding(true);
     try {
-      await addItem(product.id, 1);
+      await addItem(product.id, 1, undefined, undefined, {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        imageUrl: product.imageUrl,
+        slug: product.slug,
+        inStock: product.inStock,
+      });
       toast.success("Added to cart!", { description: product.name });
     } catch {
       // error handled in context

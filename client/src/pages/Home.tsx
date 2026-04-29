@@ -5,21 +5,25 @@ import ProductCard from "@/components/ProductCard";
 import { CardStack } from "@/components/ui/card-stack";
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { api } from "@/lib/api";
+import {
+  buildVisibleCategoryIdSet,
+  filterProductsByVisibleCategoryIds,
+  filterVisibleCategories,
+  getCategoryHref,
+  getPrimaryCategory,
+} from "@/lib/catalog";
+import { Link } from "@/lib/navigation";
 import { motion, useInView } from "framer-motion";
 import {
   ArrowRight,
   Instagram,
   Music2,
-  Package,
   RefreshCw,
   Shield,
-  ShoppingBag,
-  Sparkles,
   Star,
   Truck,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { Link } from "@/lib/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 function FadeInSection({
   children,
@@ -46,95 +50,63 @@ function FadeInSection({
   );
 }
 
-const CATEGORIES = [
-  {
-    slug: "mens-collection",
-    label: "Men's Collection",
-    sub: "Streetwear / Casual / Denim",
-    image: "https://images.unsplash.com/photo-1617137968427-85924c800a22?w=600&q=80",
-    color: "from-slate-900/80",
-  },
-  {
-    slug: "womens-collection",
-    label: "Women's Collection",
-    sub: "Dresses / Tops / Skirts",
-    image: "https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=600&q=80",
-    color: "from-rose-900/80",
-  },
-  {
-    slug: "shoes",
-    label: "Shoes",
-    sub: "Sneakers / Boots / Heels",
-    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80",
-    color: "from-amber-900/80",
-  },
-  {
-    slug: "accessories",
-    label: "Accessories",
-    sub: "Hats / Belts / Bags",
-    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80",
-    color: "from-emerald-900/80",
-  },
-  {
-    slug: "official-wear",
-    label: "Official Wear",
-    sub: "Suits / Blazers / Formal",
-    image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&q=80",
-    color: "from-indigo-900/80",
-  },
-] as const;
-
-const CAROUSEL_ITEMS = [
-  {
-    id: 1,
-    title: "Designer Streetwear",
-    description: "Premium thrifted pieces from top brands curated for the bold.",
-    imageSrc: "https://images.unsplash.com/photo-1523398002811-999ca8dec234?w=700&q=80",
-    href: "/category/mens-collection",
-    ctaLabel: "Shop Men",
-    tag: "Men's Collection",
-  },
-  {
-    id: 2,
-    title: "Elegant Women's Wear",
-    description: "Stunning dresses, blouses, and co-ords for every occasion.",
-    imageSrc: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=700&q=80",
-    href: "/category/womens-collection",
-    ctaLabel: "Shop Women",
-    tag: "Women's Collection",
-  },
-  {
-    id: 3,
-    title: "Iconic Footwear",
-    description: "From classic sneakers to statement boots, walk in style.",
-    imageSrc: "https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=700&q=80",
-    href: "/category/shoes",
-    ctaLabel: "Shop Shoes",
-    tag: "Shoes",
-  },
-  {
-    id: 4,
-    title: "Statement Accessories",
-    description: "Hats, belts, bags and more for the finishing touch.",
-    imageSrc: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=700&q=80",
-    href: "/category/accessories",
-    ctaLabel: "Shop Accessories",
-    tag: "Accessories",
-  },
-  {
-    id: 5,
-    title: "Power Suits & Formal",
-    description: "Look sharp in our curated official wear collection.",
-    imageSrc: "https://images.unsplash.com/photo-1594938298603-c8148c4b4a0e?w=700&q=80",
-    href: "/category/official-wear",
-    ctaLabel: "Shop Official",
-    tag: "Official Wear",
-  },
-] as const;
-
 export default function Home() {
   const { data: featuredProducts, isLoading } = api.products.featured.useQuery();
+  const { data: categories = [] } = api.categories.list.useQuery();
   const [carouselSize, setCarouselSize] = useState({ width: 440, height: 300 });
+
+  const storefrontCategories = useMemo(() => filterVisibleCategories(categories), [categories]);
+  const primaryCategory = useMemo(
+    () => getPrimaryCategory(storefrontCategories),
+    [storefrontCategories],
+  );
+  const visibleCategoryIds = useMemo(() => buildVisibleCategoryIdSet(categories), [categories]);
+  const visibleFeaturedProducts = useMemo(
+    () => filterProductsByVisibleCategoryIds(featuredProducts ?? [], visibleCategoryIds),
+    [featuredProducts, visibleCategoryIds],
+  );
+  const categoryNameById = useMemo(
+    () =>
+      new Map(
+        storefrontCategories.map((category) => [category.id, category.name] as const),
+      ),
+    [storefrontCategories],
+  );
+  const featuredPreviewImages = useMemo(
+    () => visibleFeaturedProducts.slice(0, 4),
+    [visibleFeaturedProducts],
+  );
+  const categoryCards = useMemo(
+    () =>
+      storefrontCategories.map((category, index) => ({
+        id: category.id,
+        label: category.name,
+        sub: category.description || "Explore the latest arrivals in this collection.",
+        image: category.imageUrl || "",
+        href: getCategoryHref(category),
+        color:
+          index % 3 === 0
+            ? "from-rose-900/80"
+            : index % 3 === 1
+              ? "from-amber-900/80"
+              : "from-emerald-900/80",
+      })),
+    [storefrontCategories],
+  );
+  const carouselItems = useMemo(
+    () =>
+      storefrontCategories.slice(0, 5).map((category) => ({
+        id: category.id,
+        title: category.name,
+        description:
+          category.description || "Discover the newest pieces available in this collection.",
+        imageSrc: category.imageUrl || "",
+        href: getCategoryHref(category),
+        ctaLabel: `Shop ${category.name}`,
+        tag: category.name,
+      })),
+    [storefrontCategories],
+  );
 
   useEffect(() => {
     const updateCarouselSize = () => {
@@ -155,13 +127,12 @@ export default function Home() {
     <div className="min-h-screen overflow-x-clip">
       <Hero />
 
-      {/* ── Social / trust strip ── */}
       <section className="border-b border-border bg-background py-5">
         <div className="container">
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card px-5 py-4">
             <div>
               <p className="text-[11px] font-medium uppercase tracking-widest text-pink-500">
-                Don&apos;t miss the next drop
+                Don't miss the next drop
               </p>
               <p className="mt-1 text-md font-medium text-foreground">
                 Follow us to know when our next stock drops.
@@ -210,36 +181,44 @@ export default function Home() {
           </FadeInSection>
 
           <FadeInSection delay={0.1}>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-              {CATEGORIES.map((category, index) => (
-                <motion.div
-                  key={category.slug}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.08 }}
-                >
-                  <Link
-                    href={`/category/${category.slug}`}
-                    className="group relative block aspect-[3/4] overflow-hidden rounded-2xl bg-secondary"
+            {categoryCards.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border px-6 py-14 text-center text-muted-foreground">
+                Collections will appear here as soon as categories are available.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+                {categoryCards.map((category, index) => (
+                  <motion.div
+                    key={category.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.08 }}
                   >
-                    <img
-                      src={category.image}
-                      alt={category.label}
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                    <div className={`absolute inset-0 bg-gradient-to-t ${category.color} to-transparent`} />
-                    <div className="absolute inset-x-0 bottom-0 p-4">
-                      <h3 className="font-display text-lg font-bold leading-tight text-white">{category.label}</h3>
-                      <p className="mt-0.5 text-xs text-white/70">{category.sub}</p>
-                      <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-white/90 transition-all group-hover:gap-2">
-                        Shop <ArrowRight className="h-3 w-3" />
-                      </span>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
+                    <Link
+                      href={category.href}
+                      className="group relative block aspect-[3/4] overflow-hidden rounded-2xl bg-secondary"
+                    >
+                      {category.image ? (
+                        <img
+                          src={category.image}
+                          alt={category.label}
+                          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                      ) : null}
+                      <div className={`absolute inset-0 bg-gradient-to-t ${category.color} to-transparent`} />
+                      <div className="absolute inset-x-0 bottom-0 p-4">
+                        <h3 className="font-display text-lg font-bold leading-tight text-white">{category.label}</h3>
+                        <p className="mt-0.5 line-clamp-2 text-xs text-white/70">{category.sub}</p>
+                        <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-white/90 transition-all group-hover:gap-2">
+                          Shop <ArrowRight className="h-3 w-3" />
+                        </span>
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </FadeInSection>
         </div>
       </section>
@@ -248,11 +227,14 @@ export default function Home() {
         <div className="container">
           <FadeInSection className="mb-12 flex items-end justify-between">
             <div>
-              <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-accent">Hand-Picked</p>
+              <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-accent">Live Catalog Edit</p>
               <h2 className="font-display text-4xl font-bold text-foreground md:text-5xl">Featured Pieces</h2>
+              <p className="mt-3 max-w-lg text-sm leading-6 text-muted-foreground">
+                A rotating mix from your live catalog, balanced across categories as you keep adding more collections.
+              </p>
             </div>
             <Link
-              href="/category/mens-collection"
+              href={getCategoryHref(primaryCategory)}
               className="hidden items-center gap-2 text-sm font-semibold text-foreground transition-colors hover:text-accent md:inline-flex"
             >
               View All <ArrowRight className="h-4 w-4" />
@@ -262,7 +244,7 @@ export default function Home() {
           {isLoading ? (
             <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
               {Array.from({ length: 8 }).map((_, index) => (
-                <div key={index} className="overflow-hidden rounded-2xl border border-border bg-card animate-pulse">
+                <div key={index} className="animate-pulse overflow-hidden rounded-2xl border border-border bg-card">
                   <div className="aspect-[3/4] bg-secondary" />
                   <div className="space-y-2 p-4">
                     <div className="h-3 w-1/3 rounded bg-secondary" />
@@ -272,9 +254,9 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          ) : (
+          ) : visibleFeaturedProducts.length > 0 ? (
             <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
-              {(featuredProducts ?? []).slice(0, 8).map((product, index) => (
+              {visibleFeaturedProducts.slice(0, 8).map((product, index) => (
                 <motion.div
                   key={product.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -286,17 +268,67 @@ export default function Home() {
                 </motion.div>
               ))}
             </div>
+          ) : (
+            <div className="rounded-3xl border border-dashed border-border px-6 py-14 text-center text-muted-foreground">
+              Products will appear here automatically as soon as the catalog has live items.
+            </div>
           )}
 
-          <div className="mt-10 text-center">
-            <Link
-              href="/category/mens-collection"
-              className="cta-swoop inline-flex items-center gap-2 rounded-xl px-8 py-3.5 text-sm font-semibold transition-all"
-            >
-              <Package className="h-4 w-4" />
-              Browse All Products
-            </Link>
-          </div>
+          {featuredPreviewImages.length > 0 ? (
+            <div className="mt-10 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+              <div className="rounded-[1.75rem] border border-border bg-card p-4 shadow-sm">
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                  {featuredPreviewImages.map((product, index) => (
+                    <motion.div
+                      key={`preview-${product.id}`}
+                      initial={{ opacity: 0, y: 18 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: index * 0.06 }}
+                    >
+                      <Link
+                        href={`/product/${product.slug}`}
+                        className="group relative block aspect-[4/5] overflow-hidden rounded-[1.35rem] bg-secondary"
+                      >
+                        <img
+                          src={product.imageUrl}
+                          alt={product.name}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+                        <div className="absolute inset-x-0 bottom-0 p-3">
+                          <p className="line-clamp-1 text-sm font-semibold text-white">{product.name}</p>
+                          <p className="mt-1 text-[11px] uppercase tracking-[0.24em] text-white/72">
+                            {categoryNameById.get(product.categoryId) ?? "Catalog"}
+                          </p>
+                        </div>
+                      </Link>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-[1.75rem] bg-[linear-gradient(135deg,#1f2937_0%,#0f172a_100%)] p-6 text-white shadow-[0_24px_60px_-32px_rgba(15,23,42,0.5)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/60">
+                  Catalog rotation
+                </p>
+                <h3 className="mt-4 font-display text-3xl font-semibold leading-tight">
+                  The homepage now refreshes from your actual stock.
+                </h3>
+                <p className="mt-4 text-sm leading-7 text-white/72">
+                  Instead of a static browse button here, shoppers now see live product imagery pulled from the catalog, with category variety built in.
+                </p>
+                <Link
+                  href={getCategoryHref(primaryCategory)}
+                  className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/12"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                  Explore collections
+                </Link>
+              </div>
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -310,15 +342,21 @@ export default function Home() {
             </p>
           </FadeInSection>
 
-          <CardStack
-            items={CAROUSEL_ITEMS}
-            cardWidth={carouselSize.width}
-            cardHeight={carouselSize.height}
-            autoAdvance
-            intervalMs={3500}
-            pauseOnHover
-            loop
-          />
+          {carouselItems.length > 0 ? (
+            <CardStack
+              items={carouselItems}
+              cardWidth={carouselSize.width}
+              cardHeight={carouselSize.height}
+              autoAdvance
+              intervalMs={3500}
+              pauseOnHover
+              loop
+            />
+          ) : (
+            <div className="rounded-2xl border border-dashed border-border px-6 py-14 text-center text-muted-foreground">
+              Category highlights will appear here after the storefront categories load.
+            </div>
+          )}
         </div>
       </section>
 
@@ -347,7 +385,7 @@ export default function Home() {
             <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 via-transparent to-transparent p-8">
               <div>
                 <h3 className="mb-2 font-display text-3xl font-bold text-white">The Alivella Boutique Store</h3>
-                <p className="text-sm text-white/80">Nairobi&apos;s finest thrift destination</p>
+                <p className="text-sm text-white/80">Nairobi's finest thrift destination</p>
               </div>
             </div>
           </div>
@@ -371,9 +409,9 @@ export default function Home() {
               },
               {
                 name: "Brian O.",
-                text: "The official wear section is fire. Got a full suit for my interview and looked sharp!",
+                text: "The shoe edit is fire. Got a full look for my interview and looked sharp!",
                 rating: 5,
-                item: "Navy Blue Suit",
+                item: "Classic Derby Shoes",
               },
               {
                 name: "Zara M.",
@@ -389,7 +427,7 @@ export default function Home() {
                       <Star key={starIndex} className="h-4 w-4 fill-accent text-accent" />
                     ))}
                   </div>
-                  <p className="mb-4 text-sm leading-relaxed text-foreground/80">&quot;{review.text}&quot;</p>
+                  <p className="mb-4 text-sm leading-relaxed text-foreground/80">"{review.text}"</p>
                   <div className="flex items-center gap-3 border-t border-border pt-4">
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
                       {review.name.charAt(0)}
@@ -405,7 +443,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
     </div>
   );
 }

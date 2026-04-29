@@ -1,41 +1,21 @@
 "use client";
 
-import { api } from "@/lib/api";
-import { motion } from "framer-motion";
-import { Filter, Grid3X3, LayoutList, Search, SlidersHorizontal } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { useParams } from "@/lib/navigation";
 import ProductCard from "@/components/ProductCard";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
-const CATEGORY_META: Record<string, { title: string; description: string; heroImage: string }> = {
-  "mens-collection": {
-    title: "Men's Collection",
-    description: "Streetwear, casual fits, denim, sweaters, hoodies, and more — curated for the modern man.",
-    heroImage: "https://images.unsplash.com/photo-1617137968427-85924c800a22?w=1200&q=80",
-  },
-  "womens-collection": {
-    title: "Women's Collection",
-    description: "Stunning dresses, elegant tops, chic skirts, and everything in between.",
-    heroImage: "https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=1200&q=80",
-  },
-  "shoes": {
-    title: "Shoes",
-    description: "Sneakers, boots, heels, loafers — step out in style with our footwear collection.",
-    heroImage: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1200&q=80",
-  },
-  "accessories": {
-    title: "Accessories",
-    description: "Hats, belts, bags, scarves, sunglasses — the details that define your look.",
-    heroImage: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=1200&q=80",
-  },
-  "official-wear": {
-    title: "Official Wear",
-    description: "Men's suits, women's trouser suits, blazers, skirt suits — power dressing for every occasion.",
-    heroImage: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=1200&q=80",
-  },
-};
+import { Input } from "@/components/ui/input";
+import { api } from "@/lib/api";
+import { Link, useParams } from "@/lib/navigation";
+import { motion } from "framer-motion";
+import {
+  ArrowLeft,
+  Filter,
+  Grid3X3,
+  LayoutList,
+  Package2,
+  Search,
+  SlidersHorizontal,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 
 const SORT_OPTIONS = [
   { value: "newest", label: "Newest First" },
@@ -43,8 +23,8 @@ const SORT_OPTIONS = [
   { value: "price-desc", label: "Price: High to Low" },
 ];
 
-const productcondition_FILTERS = [
-  { value: "", label: "All productconditions" },
+const PRODUCT_CONDITION_FILTERS = [
+  { value: "", label: "All conditions" },
   { value: "new", label: "New" },
   { value: "like_new", label: "Like New" },
   { value: "good", label: "Good" },
@@ -54,173 +34,233 @@ const productcondition_FILTERS = [
 export default function Category() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug ?? "";
-  const meta = CATEGORY_META[slug] ?? { title: "Collection", description: "", heroImage: "" };
 
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("newest");
-  const [productconditionFilter, setproductconditionFilter] = useState("");
+  const [productConditionFilter, setProductConditionFilter] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
 
-  const { data: category } = api.categories.bySlug.useQuery({ slug }, { enabled: !!slug });
+  const { data: category } = api.categories.bySlug.useQuery(
+    { slug },
+    { enabled: !!slug },
+  );
   const { data: products = [], isLoading } = api.products.list.useQuery(
     { categoryId: category?.id, limit: 60 },
-    { enabled: !!category?.id }
+    { enabled: !!category?.id },
   );
+  const heroTitle = category?.name ?? "Collection";
+  const heroDescription =
+    category?.description ?? "Browse this collection and discover what is live right now.";
+  const heroImage = category?.imageUrl ?? "";
+  const hasProducts = products.length > 0;
 
   const filtered = useMemo(() => {
     let list = [...products];
     if (search) {
       const q = search.toLowerCase();
-      list = list.filter(p => p.name.toLowerCase().includes(q) || (p.brand ?? "").toLowerCase().includes(q));
+      list = list.filter(
+        (product) =>
+          product.name.toLowerCase().includes(q) ||
+          (product.brand ?? "").toLowerCase().includes(q),
+      );
     }
-    if (productconditionFilter) {
-      list = list.filter(p => p.productcondition === productconditionFilter);
+    if (productConditionFilter) {
+      list = list.filter((product) => product.productcondition === productConditionFilter);
     }
     if (sortBy === "price-asc") list.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
     else if (sortBy === "price-desc") list.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
     return list;
-  }, [products, search, productconditionFilter, sortBy]);
+  }, [productConditionFilter, products, search, sortBy]);
+
+  if (!slug) {
+    return (
+      <div className="container py-24 text-center">
+        <h2 className="font-display text-2xl font-bold mb-3">Collection unavailable</h2>
+        <p className="text-muted-foreground mb-6">
+          This category is no longer visible in the storefront.
+        </p>
+        <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-accent">
+          <ArrowLeft className="w-4 h-4" /> Back to Home
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
-      {/* Hero */}
-      <div className="relative h-56 md:h-72 overflow-hidden bg-primary">
-        {meta.heroImage && (
-          <img src={meta.heroImage} alt={meta.title} className="absolute inset-0 w-full h-full object-cover opacity-30" />
-        )}
+      <div className="relative h-56 overflow-hidden bg-primary md:h-72">
+        {heroImage ? (
+          <img
+            src={heroImage}
+            alt={heroTitle}
+            className="absolute inset-0 h-full w-full object-cover opacity-30"
+          />
+        ) : null}
         <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/50" />
-        <div className="container relative z-10 h-full flex flex-col justify-center">
+        <div className="container relative z-10 flex h-full flex-col justify-center">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="font-display text-4xl md:text-5xl font-bold text-primary-foreground mb-3"
+            className="font-display mb-3 text-4xl font-bold text-primary-foreground md:text-5xl"
           >
-            {meta.title}
+            {heroTitle}
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-primary-foreground/70 max-w-xl text-sm md:text-base"
+            className="max-w-xl text-sm text-primary-foreground/70 md:text-base"
           >
-            {meta.description}
+            {heroDescription}
           </motion.p>
         </div>
       </div>
 
       <div className="container py-8">
-        {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-3 mb-6">
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+          <div className="relative max-w-sm min-w-[200px] flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search products..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) => setSearch(event.target.value)}
               className="pl-9"
             />
           </div>
 
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="px-3 py-2 text-sm border border-border rounded-lg bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            onChange={(event) => setSortBy(event.target.value)}
+            className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           >
-            {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            {SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
 
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setShowFilters(!showFilters)}
+            onClick={() => setShowFilters((current) => !current)}
             className="gap-2"
           >
             <SlidersHorizontal className="w-4 h-4" />
             Filters
           </Button>
 
-          <div className="flex items-center gap-1 ml-auto">
+          <div className="ml-auto flex items-center gap-1">
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-2 rounded-lg transition-colors ${viewMode === "grid" ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}
+              className={`rounded-lg p-2 transition-colors ${viewMode === "grid" ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}
             >
               <Grid3X3 className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`p-2 rounded-lg transition-colors ${viewMode === "list" ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}
+              className={`rounded-lg p-2 transition-colors ${viewMode === "list" ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}
             >
               <LayoutList className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Filter Panel */}
-        {showFilters && (
+        {showFilters ? (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="bg-card border border-border rounded-xl p-4 mb-6"
+            className="mb-6 rounded-xl border border-border bg-card p-4"
           >
-            <h3 className="text-sm font-semibold mb-3">Filter by productcondition</h3>
+            <h3 className="mb-3 text-sm font-semibold">Filter by condition</h3>
             <div className="flex flex-wrap gap-2">
-              {productcondition_FILTERS.map(f => (
+              {PRODUCT_CONDITION_FILTERS.map((filter) => (
                 <button
-                  key={f.value}
-                  onClick={() => setproductconditionFilter(f.value)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-                    productconditionFilter === f.value
-                      ? "bg-primary text-primary-foreground border-primary"
+                  key={filter.value}
+                  onClick={() => setProductConditionFilter(filter.value)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                    productConditionFilter === filter.value
+                      ? "border-primary bg-primary text-primary-foreground"
                       : "border-border hover:bg-secondary"
                   }`}
                 >
-                  {f.label}
+                  {filter.label}
                 </button>
               ))}
             </div>
           </motion.div>
-        )}
+        ) : null}
 
-        {/* Count */}
-        <p className="text-sm text-muted-foreground mb-6">
-          {isLoading ? "Loading..." : `${filtered.length} item${filtered.length !== 1 ? "s" : ""} found`}
+        <p className="mb-6 text-sm text-muted-foreground">
+          {isLoading
+            ? "Loading..."
+            : !category
+              ? "Collection unavailable"
+              : !hasProducts
+                ? "Coming Soon"
+                : `${filtered.length} item${filtered.length !== 1 ? "s" : ""} found`}
         </p>
 
-        {/* Products */}
         {isLoading ? (
           <div className={`grid gap-5 ${viewMode === "grid" ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "grid-cols-1"}`}>
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="bg-card rounded-2xl overflow-hidden border border-border animate-pulse">
+            {Array.from({ length: 12 }).map((_, index) => (
+              <div key={index} className="animate-pulse overflow-hidden rounded-2xl border border-border bg-card">
                 <div className="aspect-[3/4] bg-secondary" />
-                <div className="p-4 space-y-2">
-                  <div className="h-3 bg-secondary rounded w-1/3" />
-                  <div className="h-4 bg-secondary rounded w-3/4" />
-                  <div className="h-4 bg-secondary rounded w-1/2" />
+                <div className="space-y-2 p-4">
+                  <div className="h-3 w-1/3 rounded bg-secondary" />
+                  <div className="h-4 w-3/4 rounded bg-secondary" />
+                  <div className="h-4 w-1/2 rounded bg-secondary" />
                 </div>
               </div>
             ))}
           </div>
+        ) : !category ? (
+          <div className="py-24 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
+              <ArrowLeft className="w-7 h-7 text-muted-foreground" />
+            </div>
+            <h3 className="mb-2 text-lg font-semibold">Collection unavailable</h3>
+            <p className="text-sm text-muted-foreground">
+              This category could not be found.
+            </p>
+          </div>
+        ) : !hasProducts ? (
+          <div className="py-24 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
+              <Package2 className="w-7 h-7 text-muted-foreground" />
+            </div>
+            <h3 className="mb-2 text-lg font-semibold">Coming Soon</h3>
+            <p className="text-sm text-muted-foreground">
+              We are preparing this collection. Check back soon for the first arrivals.
+            </p>
+          </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-24">
-            <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="py-24 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
               <Filter className="w-7 h-7 text-muted-foreground" />
             </div>
-            <h3 className="font-semibold text-lg mb-2">No products found</h3>
-            <p className="text-muted-foreground text-sm">Try adjusting your search or filters</p>
-            <Button variant="outline" className="mt-4" onClick={() => { setSearch(""); setproductconditionFilter(""); }}>
+            <h3 className="mb-2 text-lg font-semibold">No products found</h3>
+            <p className="text-sm text-muted-foreground">Try adjusting your search or filters.</p>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => {
+                setSearch("");
+                setProductConditionFilter("");
+              }}
+            >
               Clear Filters
             </Button>
           </div>
         ) : (
           <div className={`grid gap-5 ${viewMode === "grid" ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "grid-cols-1 max-w-2xl"}`}>
-            {filtered.map((product, i) => (
+            {filtered.map((product, index) => (
               <motion.div
                 key={product.id}
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: Math.min(i * 0.04, 0.3) }}
+                transition={{ delay: Math.min(index * 0.04, 0.3) }}
               >
                 <ProductCard product={product} />
               </motion.div>

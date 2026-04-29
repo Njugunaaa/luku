@@ -1,9 +1,8 @@
 "use client";
 
-import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { useCart } from "@/contexts/CartContext";
 import { api } from "@/lib/api";
+import { buildVisibleCategoryIdSet, filterProductsByVisibleCategoryIds, isVisibleCategorySlug } from "@/lib/catalog";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -32,7 +31,6 @@ const WHATSAPP_NUMBER = "254701887586"; // Update with actual number
 export default function ProductDetail() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug ?? "";
-  const { isAuthenticated } = useAuth();
   const { addItem } = useCart();
 
   const [selectedSize, setSelectedSize] = useState<string>("");
@@ -92,18 +90,49 @@ export default function ProductDetail() {
     try { return product.colors ? JSON.parse(product.colors) : []; }
     catch { return []; }
   })();
-  const category = categories.find((entry) => entry.id === product.categoryId);
+  const visibleCategoryIds = buildVisibleCategoryIdSet(categories);
+  const category = categories.find(
+    (entry) => entry.id === product.categoryId && isVisibleCategorySlug(entry.slug),
+  );
+  const visibleRelatedProducts = filterProductsByVisibleCategoryIds(
+    (relatedProducts ?? []).filter((relatedProduct) => relatedProduct.id !== product.id),
+    visibleCategoryIds,
+  );
+
+  if (categories.length > 0 && !visibleCategoryIds.has(product.categoryId)) {
+    return (
+      <div className="container py-24 text-center">
+        <h2 className="font-display text-2xl font-bold mb-3">Product unavailable</h2>
+        <p className="text-muted-foreground mb-6">This collection is no longer being displayed.</p>
+        <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-accent">
+          <ArrowLeft className="w-4 h-4" /> Back to Home
+        </Link>
+      </div>
+    );
+  }
 
   const discount = product.originalPrice
     ? Math.round((1 - parseFloat(product.price) / parseFloat(product.originalPrice)) * 100)
     : null;
 
   const handleAddToCart = async () => {
-    if (!isAuthenticated) { window.location.href = getLoginUrl(); return; }
     if (sizes.length > 0 && !selectedSize) { toast.error("Please select a size"); return; }
     setAdding(true);
     try {
-      await addItem(product.id, quantity, selectedSize || undefined, selectedColor || undefined);
+      await addItem(
+        product.id,
+        quantity,
+        selectedSize || undefined,
+        selectedColor || undefined,
+        {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          imageUrl: product.imageUrl,
+          slug: product.slug,
+          inStock: product.inStock,
+        },
+      );
       toast.success("Added to cart!", { description: `${product.name} × ${quantity}` });
     } finally {
       setAdding(false);
@@ -351,12 +380,11 @@ export default function ProductDetail() {
         </div>
 
         {/* Related Products */}
-        {relatedProducts && relatedProducts.length > 0 && (
+        {visibleRelatedProducts.length > 0 && (
           <div className="mt-20">
             <h2 className="font-display text-2xl font-bold mb-6">You May Also Like</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-              {relatedProducts
-                .filter(p => p.id !== product.id)
+              {visibleRelatedProducts
                 .slice(0, 4)
                 .map(p => <ProductCard key={p.id} product={p} />)}
             </div>

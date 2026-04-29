@@ -1,13 +1,19 @@
 "use client";
 
+import { api } from "@/lib/api";
+import { getCategoryHref, getPrimaryCategory } from "@/lib/catalog";
 import { motion } from "framer-motion";
 import { ShoppingBag } from "lucide-react";
 import { Link } from "@/lib/navigation";
+import { useMemo } from "react";
 
 // HEADER_HEIGHT must match exactly what header.tsx exports
 const HEADER_HEIGHT = 58;
 
 export default function Hero() {
+  const { data: categories = [] } = api.categories.list.useQuery();
+  const primaryCategory = useMemo(() => getPrimaryCategory(categories), [categories]);
+
   return (
     /*
       calc(100svh - HEADER_HEIGHT) = exactly the remaining viewport
@@ -74,7 +80,7 @@ export default function Hero() {
           transition={{ delay: 0.36, duration: 0.55 }}
         >
           <Link
-            href="/category/mens-collection"
+            href={getCategoryHref(primaryCategory)}
             className="
               group inline-flex items-center gap-2.5
               rounded-full

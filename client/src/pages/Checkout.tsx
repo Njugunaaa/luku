@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { useCart } from "@/contexts/CartContext";
 import { api } from "@/lib/api";
 import { motion } from "framer-motion";
@@ -17,7 +16,7 @@ import {
   User,
 } from "lucide-react";
 import { useState } from "react";
-import { Link, useLocation } from "@/lib/navigation";
+import { Link } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,8 +24,7 @@ import { toast } from "sonner";
 
 export default function Checkout() {
   const { user, isAuthenticated } = useAuth();
-  const { items, subtotal, clearCart } = useCart();
-  const [, navigate] = useLocation();
+  const { items, subtotal, clearCart, cartMode } = useCart();
 
   const [form, setForm] = useState({
     customerName: user?.name ?? "",
@@ -52,22 +50,11 @@ export default function Checkout() {
     },
   });
 
-  if (!isAuthenticated) {
-    return (
-      <div className="container py-24 text-center">
-        <h2 className="font-display text-2xl font-bold mb-3">Sign in to checkout</h2>
-        <a href={getLoginUrl()} className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold text-sm">
-          Sign In
-        </a>
-      </div>
-    );
-  }
-
   if (items.length === 0 && !orderId) {
     return (
       <div className="container py-24 text-center">
         <h2 className="font-display text-2xl font-bold mb-3">Your cart is empty</h2>
-        <Link href="/category/mens-collection">
+        <Link href="/">
           <Button>Start Shopping</Button>
         </Link>
       </div>
@@ -89,7 +76,7 @@ export default function Checkout() {
             Your order has been received. We'll confirm it shortly.
           </p>
           <p className="text-sm text-muted-foreground mb-8">
-            Order #{orderId} — Check your orders page for updates.
+            Order #{orderId} {isAuthenticated ? "- Check your orders page for updates." : "- Save this number for support and order confirmation."}
           </p>
 
           <div className="bg-card border border-border rounded-2xl p-5 mb-6 text-left">
@@ -111,13 +98,31 @@ export default function Checkout() {
             </a>
           </div>
 
+          <div className="bg-card border border-border rounded-2xl p-5 mb-6 text-left">
+            <h3 className="font-semibold mb-2 text-blue-600 dark:text-sky-400">Track future orders even faster</h3>
+            <p className="text-sm text-muted-foreground">
+              No account was required for this order. {isAuthenticated
+                ? "Your account is already linked, so you'll see this order in your dashboard."
+                : "Create an account later if you want a personal order history and faster repeat checkout."}
+            </p>
+          </div>
+
           <div className="flex gap-3">
-            <Link href="/account/orders" className="flex-1">
-              <Button variant="outline" className="w-full gap-2">
-                <Package className="w-4 h-4" />
-                View Orders
-              </Button>
-            </Link>
+            {isAuthenticated ? (
+              <Link href="/account/orders" className="flex-1">
+                <Button variant="outline" className="w-full gap-2">
+                  <Package className="w-4 h-4" />
+                  View Orders
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/signup" className="flex-1">
+                <Button variant="outline" className="w-full gap-2">
+                  <User className="w-4 h-4" />
+                  Create Account
+                </Button>
+              </Link>
+            )}
             <Link href="/" className="flex-1">
               <Button className="w-full">Continue Shopping</Button>
             </Link>
@@ -133,6 +138,7 @@ export default function Checkout() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.customerName.trim()) { toast.error("Please enter your name"); return; }
+    if (!form.customerPhone.trim()) { toast.error("Please enter your phone number"); return; }
     if (form.needsDelivery && !form.deliveryAddress.trim()) { toast.error("Please enter your delivery address"); return; }
     setSubmitting(true);
 
@@ -166,6 +172,9 @@ export default function Checkout() {
             <div className="lg:col-span-2 space-y-6">
               {/* Contact Info */}
               <div className="bg-card border border-border rounded-2xl p-6">
+                <div className="mb-5 rounded-2xl border border-blue-200/60 bg-blue-50 px-4 py-3 text-sm text-blue-700 dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-300">
+                  No account required. Fast checkout.
+                </div>
                 <h2 className="font-semibold text-lg mb-5 flex items-center gap-2">
                   <User className="w-5 h-5 text-accent" />
                   Contact Information
@@ -183,7 +192,7 @@ export default function Checkout() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="phone">Phone Number</Label>
+                    <Label htmlFor="phone">Phone Number *</Label>
                     <div className="relative mt-1.5">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -192,6 +201,7 @@ export default function Checkout() {
                         onChange={e => setForm(f => ({ ...f, customerPhone: e.target.value }))}
                         placeholder="+254 700 000 000"
                         className="pl-9"
+                        required
                       />
                     </div>
                   </div>
@@ -288,6 +298,32 @@ export default function Checkout() {
                     </div>
                   </motion.div>
                 )}
+
+                <div className="grid grid-cols-1 gap-4 mt-5 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="address">Address</Label>
+                    <div className="relative mt-1.5">
+                      <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        id="address"
+                        value={form.deliveryAddress}
+                        onChange={e => setForm(f => ({ ...f, deliveryAddress: e.target.value }))}
+                        placeholder="Estate, street, building or pickup note"
+                        className="pl-9"
+                      />
+                    </div>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="notes">Notes</Label>
+                    <Input
+                      id="notes"
+                      value={form.deliveryNotes}
+                      onChange={e => setForm(f => ({ ...f, deliveryNotes: e.target.value }))}
+                      placeholder="Landmark, preferred delivery time, or anything helpful"
+                      className="mt-1.5"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Payment Info */}
@@ -351,8 +387,10 @@ export default function Checkout() {
                   {submitting ? "Placing Order..." : "Place Order"}
                 </Button>
 
-                <p className="text-xs text-muted-foreground text-center mt-3">
-                  By placing your order, you agree to our terms of service.
+              <p className="text-xs text-muted-foreground text-center mt-3">
+                  {cartMode === "guest"
+                    ? "Guest checkout is active. You can place this order without creating an account."
+                    : "Your order will be linked to your account for easier tracking."}
                 </p>
               </div>
             </div>

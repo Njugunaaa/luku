@@ -1,7 +1,5 @@
 "use client";
 
-import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { useCart } from "@/contexts/CartContext";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Minus, Package, Plus, ShoppingBag, Trash2 } from "lucide-react";
@@ -11,24 +9,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export default function Cart() {
-  const { isAuthenticated } = useAuth();
-  const { items, itemCount, subtotal, isLoading, updateItem, removeItem } = useCart();
+  const { items, itemCount, subtotal, isLoading, updateItem, removeItem, cartMode } = useCart();
   const [, navigate] = useLocation();
-
-  if (!isAuthenticated) {
-    return (
-      <div className="container py-24 text-center">
-        <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
-          <ShoppingBag className="w-7 h-7 text-muted-foreground" />
-        </div>
-        <h2 className="font-display text-2xl font-bold mb-2">Sign in to view your cart</h2>
-        <p className="text-muted-foreground mb-6">Your cart items are saved when you're signed in.</p>
-        <a href={getLoginUrl()} className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold text-sm">
-          Sign In
-        </a>
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (
@@ -62,7 +44,7 @@ export default function Cart() {
           </div>
           <h2 className="font-display text-2xl font-bold mb-2">Your cart is empty</h2>
           <p className="text-muted-foreground mb-6">Discover amazing thrifted pieces and add them to your cart.</p>
-          <Link href="/category/mens-collection">
+          <Link href="/">
             <Button className="gap-2">
               <Package className="w-4 h-4" />
               Start Shopping
@@ -191,7 +173,11 @@ export default function Cart() {
                 <ArrowRight className="w-4 h-4" />
               </Button>
 
-              <Link href="/category/mens-collection" className="block text-center text-sm text-muted-foreground hover:text-foreground mt-4 transition-colors">
+              <p className="mt-3 text-center text-xs text-blue-600 dark:text-sky-400">
+                {cartMode === "guest" ? "Guest checkout is enabled. No account required." : "Signed-in checkout with saved account details."}
+              </p>
+
+              <Link href="/" className="block text-center text-sm text-muted-foreground hover:text-foreground mt-4 transition-colors">
                 Continue Shopping
               </Link>
             </div>

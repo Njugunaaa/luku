@@ -69,7 +69,7 @@ export default function AccountOrders() {
             </div>
             <h3 className="font-semibold text-lg mb-2">No orders yet</h3>
             <p className="text-muted-foreground text-sm mb-6">Start shopping to see your orders here.</p>
-            <Link href="/category/mens-collection" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold text-sm">
+            <Link href="/" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold text-sm">
               Shop Now
             </Link>
           </div>

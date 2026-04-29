@@ -42,9 +42,64 @@ export const forgotPasswordSchema = z.object({
   email: z.string().email(),
 });
 
+const supabaseEmailOtpTypeSchema = z.enum([
+  "signup",
+  "recovery",
+  "invite",
+  "magiclink",
+  "email_change",
+  "email",
+]);
+
 export const resetPasswordSchema = z.object({
-  token: z.string().trim().min(1),
+  accessToken: z.string().trim().min(1).optional(),
+  tokenHash: z.string().trim().min(1).optional(),
+  type: supabaseEmailOtpTypeSchema.optional(),
+  code: z.string().trim().min(1).optional(),
   password: z.string().min(6),
+}).superRefine((value, ctx) => {
+  if (value.accessToken || value.code || (value.tokenHash && value.type)) {
+    return;
+  }
+
+  if (value.tokenHash && !value.type) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["type"],
+      message: "Supabase token type is required when tokenHash is provided.",
+    });
+  }
+
+  ctx.addIssue({
+    code: z.ZodIssueCode.custom,
+    path: ["accessToken"],
+    message: "A Supabase access token, auth code, or token hash is required.",
+  });
+});
+
+export const verifyEmailSchema = z.object({
+  accessToken: z.string().trim().min(1).optional(),
+  tokenHash: z.string().trim().min(1).optional(),
+  type: supabaseEmailOtpTypeSchema.optional(),
+  code: z.string().trim().min(1).optional(),
+}).superRefine((value, ctx) => {
+  if (value.accessToken || value.code || (value.tokenHash && value.type)) {
+    return;
+  }
+
+  if (value.tokenHash && !value.type) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["type"],
+      message: "Supabase token type is required when tokenHash is provided.",
+    });
+  }
+
+  ctx.addIssue({
+    code: z.ZodIssueCode.custom,
+    path: ["accessToken"],
+    message: "A Supabase access token, auth code, or token hash is required.",
+  });
 });
 
 export const cartAddSchema = z.object({
@@ -61,7 +116,7 @@ export const cartUpdateSchema = z.object({
 export const websiteOrderSchema = z.object({
   customerName: z.string().trim().min(1),
   customerEmail: z.string().email().optional(),
-  customerPhone: z.string().trim().optional(),
+  customerPhone: z.string().trim().min(1),
   needsDelivery: z.boolean(),
   deliveryAddress: z.string().trim().optional(),
   deliveryCity: z.string().trim().optional(),
@@ -146,4 +201,3 @@ export const adminOrdersQuerySchema = z.object({
 });
 
 export const summaryPeriodSchema = z.enum(["weekly", "monthly", "yearly"]);
-

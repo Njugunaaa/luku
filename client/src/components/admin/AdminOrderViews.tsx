@@ -65,7 +65,7 @@ export function OrdersTable({
               </td>
               <td className="px-4 py-4 capitalize text-muted-foreground">{order.source}</td>
               <td className="px-4 py-4 text-muted-foreground">{order.items?.length ?? 0}</td>
-              <td className="px-4 py-4 font-semibold">{formatCurrency(order.total)}</td>
+              <td className="px-4 py-4 font-semibold text-[#8c6239] dark:text-[#ddb68c]">{formatCurrency(order.total)}</td>
               <td className="px-4 py-4">
                 <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold capitalize ${STATUS_COLORS[order.status] ?? "bg-secondary text-secondary-foreground"}`}>
                   {order.status}
@@ -76,7 +76,7 @@ export function OrdersTable({
                   className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold capitalize ${
                     order.paymentStatus === "paid"
                       ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-200"
-                      : "bg-rose-500/15 text-rose-700 dark:text-rose-200"
+                      : "bg-amber-500/15 text-amber-700 dark:text-amber-200"
                   }`}
                 >
                   {order.paymentStatus}
@@ -87,7 +87,7 @@ export function OrdersTable({
                 <button
                   type="button"
                   onClick={() => onSelect(order)}
-                  className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-pink-400 hover:text-pink-500"
+                  className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-stone-300 hover:text-slate-950 dark:hover:border-white/20 dark:hover:text-white"
                 >
                   <Edit3 className="h-3.5 w-3.5" />
                   Manage
@@ -138,7 +138,7 @@ export function OrderDetailModal({
       >
         <div className="flex items-start justify-between border-b border-border px-6 py-5">
           <div>
-            <p className="text-xs uppercase tracking-[0.24em] text-pink-500">Order Control</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-[#8c6239] dark:text-[#ddb68c]">Order Control</p>
             <h2 className="mt-2 text-2xl font-semibold text-foreground">{order.orderNumber}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {order.customerName} · {formatOrderDate(order.createdAt)} · {order.source}
@@ -147,7 +147,7 @@ export function OrderDetailModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-border p-2 text-muted-foreground transition-colors hover:border-pink-400 hover:text-pink-500"
+            className="rounded-full border border-border p-2 text-muted-foreground transition-colors hover:border-stone-300 hover:text-slate-950 dark:hover:border-white/20 dark:hover:text-white"
           >
             <X className="h-4 w-4" />
           </button>
@@ -172,7 +172,7 @@ export function OrderDetailModal({
                         className="h-14 w-14 rounded-2xl object-cover"
                       />
                     ) : (
-                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-pink-500/10 text-pink-500">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-stone-200/70 text-slate-700 dark:bg-white/8 dark:text-slate-100">
                         <Package className="h-5 w-5" />
                       </div>
                     )}
@@ -183,7 +183,7 @@ export function OrderDetailModal({
                         {item.selectedSize ? ` · Size ${item.selectedSize}` : ""}
                       </p>
                     </div>
-                    <p className="text-sm font-semibold text-foreground">{formatCurrency(item.price)}</p>
+                    <p className="text-sm font-semibold text-[#8c6239] dark:text-[#ddb68c]">{formatCurrency(item.price)}</p>
                   </div>
                 ))}
               </div>
@@ -196,22 +196,22 @@ export function OrderDetailModal({
               <div className="mt-4 space-y-3 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>{formatCurrency(order.subtotal)}</span>
+                  <span className="text-[#8c6239] dark:text-[#ddb68c]">{formatCurrency(order.subtotal)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Delivery</span>
-                  <span>{formatCurrency(order.deliveryFee)}</span>
+                  <span className="text-[#8c6239] dark:text-[#ddb68c]">{formatCurrency(order.deliveryFee)}</span>
                 </div>
                 <div className="flex items-center justify-between border-t border-border pt-3 text-base font-semibold">
                   <span>Total</span>
-                  <span>{formatCurrency(order.total)}</span>
+                  <span className="text-[#8c6239] dark:text-[#ddb68c]">{formatCurrency(order.total)}</span>
                 </div>
               </div>
             </div>
 
             {order.needsDelivery ? (
-              <div className="rounded-3xl border border-pink-400/20 bg-pink-500/10 p-5">
-                <p className="flex items-center gap-2 text-sm font-semibold text-pink-600 dark:text-pink-200">
+              <div className="rounded-3xl border border-[#dac2aa] bg-[#f7efe6] p-5 dark:border-[#3b3025] dark:bg-[#231c16]">
+                <p className="flex items-center gap-2 text-sm font-semibold text-[#8c6239] dark:text-[#e6c6a4]">
                   <Truck className="h-4 w-4" />
                   Delivery Required
                 </p>
@@ -230,7 +230,7 @@ export function OrderDetailModal({
                 id="order-status"
                 value={status}
                 onChange={(event) => setStatus(event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400/40"
+                className="mt-2 w-full rounded-2xl border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300/60 dark:focus:ring-white/20"
               >
                 {ORDER_STATUS_OPTIONS.map((option) => (
                   <option key={option} value={option}>
@@ -246,7 +246,7 @@ export function OrderDetailModal({
                 id="payment-status"
                 value={paymentStatus}
                 onChange={(event) => setPaymentStatus(event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400/40"
+                className="mt-2 w-full rounded-2xl border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300/60 dark:focus:ring-white/20"
               >
                 {PAYMENT_STATUS_OPTIONS.map((option) => (
                   <option key={option} value={option}>

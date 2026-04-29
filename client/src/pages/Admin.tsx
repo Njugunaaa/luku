@@ -1,20 +1,26 @@
 "use client";
 
 import { useAuth } from "@/_core/hooks/useAuth";
-import { OrdersTable, OrderDetailModal } from "@/components/admin/AdminOrderViews";
 import { CategoryManager, InventoryManager, ManualOrderForm } from "@/components/admin/AdminForms";
+import { OrderDetailModal, OrdersTable } from "@/components/admin/AdminOrderViews";
 import {
-  AdminOrder,
-  AdminProduct,
-  AdminSection,
+  type AdminOrder,
+  type AdminProduct,
+  type AdminSection,
   formatCurrency,
   formatOrderDate,
   formatRelativeAge,
   parseMoney,
-  STATUS_COLORS,
 } from "@/components/admin/admin-types";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import {
+  buildVisibleCategoryIdSet,
+  filterProductsByVisibleCategoryIds,
+  filterVisibleCategories,
+} from "@/lib/catalog";
+import { Link } from "@/lib/navigation";
+import { cn } from "@/lib/utils";
 import {
   AlertTriangle,
   BarChart3,
@@ -22,6 +28,7 @@ import {
   ClipboardList,
   Clock3,
   DollarSign,
+  LayoutGrid,
   Package,
   RefreshCw,
   ShieldAlert,
@@ -31,11 +38,10 @@ import {
   Users,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Link } from "@/lib/navigation";
 import { toast } from "sonner";
 import {
-  Bar,
-  BarChart,
+  Area,
+  AreaChart,
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
@@ -67,18 +73,27 @@ const ADMIN_SECTIONS: Array<{
   id: AdminSection;
   label: string;
   description: string;
-  icon: typeof BarChart3;
+  icon: typeof LayoutGrid;
 }> = [
-  { id: "overview", label: "Overview", description: "Daily command center", icon: BarChart3 },
-  { id: "current", label: "Current Orders", description: "Active fulfillment queue", icon: ClipboardList },
-  { id: "pending", label: "Pending Orders", description: "Delete or process fresh orders", icon: Clock3 },
-  { id: "past", label: "Past Orders", description: "Completed and cancelled history", icon: Clock3 },
-  { id: "surveillance", label: "Surveillance", description: "Watch urgent operations", icon: AlertTriangle },
-  { id: "manual", label: "Manual Entry", description: "Book WhatsApp orders", icon: Truck },
-  { id: "inventory", label: "Inventory", description: "Manage stock and pricing", icon: Boxes },
-  { id: "customers", label: "Customers", description: "Review every registered user", icon: Users },
-  { id: "analytics", label: "Analytics", description: "Weekly, monthly, yearly revenue", icon: TrendingUp },
+  { id: "overview", label: "Overview", description: "Daily pulse", icon: LayoutGrid },
+  { id: "current", label: "Current Orders", description: "Active work", icon: ClipboardList },
+  { id: "pending", label: "Pending Orders", description: "Needs review", icon: Clock3 },
+  { id: "past", label: "Past Orders", description: "Completed history", icon: Package },
+  { id: "surveillance", label: "Attention", description: "Urgent checks", icon: AlertTriangle },
+  { id: "manual", label: "Manual Orders", description: "WhatsApp and walk-in", icon: Truck },
+  { id: "inventory", label: "Inventory", description: "Products and categories", icon: Boxes },
+  { id: "customers", label: "Customers", description: "Accounts", icon: Users },
+  { id: "analytics", label: "Analytics", description: "Revenue and trend", icon: BarChart3 },
 ];
+
+const pageClass =
+  "min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(120,53,15,0.08),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(15,23,42,0.04),transparent_28%),linear-gradient(180deg,#faf6f1_0%,#f4f3ef_38%,#eef1f3_100%)] pb-6 dark:bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.08),transparent_22%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.04),transparent_24%),linear-gradient(180deg,#101214_0%,#15181c_45%,#0f1114_100%)]";
+const shellClass =
+  "rounded-[1.75rem] border border-stone-200/85 bg-white/96 shadow-[0_20px_65px_-40px_rgba(15,23,42,0.28)] dark:border-white/8 dark:bg-[#111315]/96";
+const panelClass =
+  "rounded-[1.4rem] border border-stone-200/80 bg-stone-50/88 dark:border-white/8 dark:bg-[#181b20]/92";
+const subtleTextClass = "text-slate-600 dark:text-slate-300";
+const metricTextClass = "text-slate-950 dark:text-slate-50";
 
 export default function Admin() {
   const { user, isAuthenticated } = useAuth();
@@ -101,14 +116,10 @@ export default function Admin() {
     activeSection === "overview" ||
     activeSection === "surveillance" ||
     activeSection === "inventory";
-  const needsCategories = activeSection === "inventory";
 
-  const ordersQuery = api.admin.allOrders.useQuery(
-    {},
-    { enabled: needsOrders, staleTime: 30_000 },
-  );
+  const ordersQuery = api.admin.allOrders.useQuery({}, { enabled: needsOrders, staleTime: 30_000 });
   const weeklySummaryQuery = api.admin.weeklySummary.useQuery({
-    enabled: needsSummaries,
+    enabled: needsSummaries && analyticsPeriod === "weekly",
     staleTime: 30_000,
   });
   const monthlySummaryQuery = api.admin.monthlySummary.useQuery({
@@ -116,32 +127,30 @@ export default function Admin() {
     staleTime: 30_000,
   });
   const yearlySummaryQuery = api.admin.yearlySummary.useQuery({
-    enabled: needsSummaries,
+    enabled: needsSummaries && analyticsPeriod === "yearly",
     staleTime: 30_000,
   });
-  const usersQuery = api.admin.allUsers.useQuery({
-    enabled: needsUsers,
-    staleTime: 30_000,
-  });
-  const productsQuery = api.admin.allProducts.useQuery({
-    enabled: needsProducts,
-    staleTime: 30_000,
-  });
-  const categoriesQuery = api.categories.list.useQuery({
-    enabled: needsCategories,
-    staleTime: 30_000,
-  });
+  const usersQuery = api.admin.allUsers.useQuery({ enabled: needsUsers, staleTime: 30_000 });
+  const productsQuery = api.admin.allProducts.useQuery({ enabled: needsProducts, staleTime: 30_000 });
+  const categoriesQuery = api.categories.list.useQuery({ staleTime: 30_000 });
+
+  async function refetchAdminData() {
+    await Promise.all([
+      ordersQuery.refetch(),
+      weeklySummaryQuery.refetch(),
+      monthlySummaryQuery.refetch(),
+      yearlySummaryQuery.refetch(),
+      usersQuery.refetch(),
+      productsQuery.refetch(),
+      categoriesQuery.refetch(),
+    ]);
+  }
 
   const updateStatus = api.admin.updateOrderStatus.useMutation({
     onSuccess: async () => {
       toast.success("Order updated.");
       setSelectedOrder(null);
-      await Promise.all([
-        ordersQuery.refetch(),
-        weeklySummaryQuery.refetch(),
-        monthlySummaryQuery.refetch(),
-        yearlySummaryQuery.refetch(),
-      ]);
+      await refetchAdminData();
     },
     onError: (error) => toast.error(error.message),
   });
@@ -150,12 +159,7 @@ export default function Admin() {
     onSuccess: async () => {
       toast.success("Manual order created.");
       setActiveSection("pending");
-      await Promise.all([
-        ordersQuery.refetch(),
-        weeklySummaryQuery.refetch(),
-        monthlySummaryQuery.refetch(),
-        yearlySummaryQuery.refetch(),
-      ]);
+      await refetchAdminData();
     },
     onError: (error) => toast.error(error.message),
   });
@@ -165,6 +169,7 @@ export default function Admin() {
       toast.success("Inventory saved.");
       await Promise.all([
         productsQuery.refetch(),
+        categoriesQuery.refetch(),
         utils.products.list.invalidate(),
         utils.products.featured.invalidate(),
       ]);
@@ -177,6 +182,7 @@ export default function Admin() {
       toast.success("Product deleted.");
       await Promise.all([
         productsQuery.refetch(),
+        categoriesQuery.refetch(),
         utils.products.list.invalidate(),
         utils.products.featured.invalidate(),
         utils.cart.get.invalidate(),
@@ -190,7 +196,10 @@ export default function Admin() {
       toast.success("Category saved.");
       await Promise.all([
         categoriesQuery.refetch(),
+        productsQuery.refetch(),
         utils.categories.list.invalidate(),
+        utils.products.list.invalidate(),
+        utils.products.featured.invalidate(),
       ]);
     },
     onError: (error) => toast.error(error.message),
@@ -200,21 +209,25 @@ export default function Admin() {
     onSuccess: async () => {
       toast.success("Pending order deleted.");
       setSelectedOrder(null);
-      await Promise.all([
-        ordersQuery.refetch(),
-        weeklySummaryQuery.refetch(),
-        monthlySummaryQuery.refetch(),
-        yearlySummaryQuery.refetch(),
-      ]);
+      await refetchAdminData();
     },
     onError: (error) => toast.error(error.message),
   });
 
   const orders = (ordersQuery.data ?? []) as AdminOrder[];
   const allUsers = usersQuery.data ?? [];
-  const allProducts = (productsQuery.data ?? []) as AdminProduct[];
   const rawCategories = categoriesQuery.data ?? [];
-  const categories = rawCategories.map((category) => ({
+  const visibleCategories = useMemo(() => filterVisibleCategories(rawCategories), [rawCategories]);
+  const visibleCategoryIds = useMemo(() => buildVisibleCategoryIdSet(rawCategories), [rawCategories]);
+  const allProducts = useMemo(
+    () =>
+      filterProductsByVisibleCategoryIds(
+        (productsQuery.data ?? []) as AdminProduct[],
+        visibleCategoryIds,
+      ) as AdminProduct[],
+    [productsQuery.data, visibleCategoryIds],
+  );
+  const categories = visibleCategories.map((category) => ({
     id: category.id,
     name: category.name,
   }));
@@ -253,24 +266,31 @@ export default function Admin() {
     monthly: monthlySummaryQuery.data,
     yearly: yearlySummaryQuery.data,
   };
-  const activeSummary = summaryMap[analyticsPeriod];
+  const activeSummary = summaryMap[analyticsPeriod] ?? monthlySummaryQuery.data;
   const revenueDelta =
     activeSummary?.previous?.totalRevenue && activeSummary.previous.totalRevenue > 0
       ? (((activeSummary.current?.totalRevenue ?? 0) - activeSummary.previous.totalRevenue) /
           activeSummary.previous.totalRevenue) *
         100
       : 0;
-
-  const revenueChartData = useMemo(() => buildRevenueChartData(orders, analyticsPeriod), [orders, analyticsPeriod]);
-  const statusMixData = useMemo(
-    () => [
-      { label: "Active", count: currentOrders.length },
-      { label: "Pending", count: pendingOrders.length },
-      { label: "Past", count: pastOrders.length },
-      { label: "Urgent", count: urgentOrders.length },
-    ],
-    [currentOrders.length, pastOrders.length, pendingOrders.length, urgentOrders.length],
+  const revenueChartData = useMemo(
+    () => buildRevenueChartData(orders, analyticsPeriod),
+    [orders, analyticsPeriod],
   );
+
+  const sectionBadges: Record<AdminSection, string> = {
+    overview: "Live",
+    current: String(currentOrders.length),
+    pending: String(pendingOrders.length),
+    past: String(pastOrders.length),
+    surveillance: String(urgentOrders.length + lowStockProducts.length),
+    manual: String(manualOrders.length),
+    inventory: String(allProducts.length),
+    customers: String(allUsers.length),
+    analytics: analyticsPeriod.toUpperCase(),
+  };
+
+  const currentSectionMeta = ADMIN_SECTIONS.find((section) => section.id === activeSection) ?? ADMIN_SECTIONS[0];
 
   if (!isAuthenticated || user?.role !== "admin") {
     return (
@@ -279,9 +299,7 @@ export default function Admin() {
           <ShieldAlert className="h-8 w-8" />
         </div>
         <h2 className="text-2xl font-bold">Access Denied</h2>
-        <p className="mt-3 text-muted-foreground">
-          Sign in as an admin to open the operator workspace.
-        </p>
+        <p className="mt-3 text-muted-foreground">Sign in as an admin to open the operator workspace.</p>
         <Link href="/">
           <Button className="mt-6">Back to Home</Button>
         </Link>
@@ -290,509 +308,639 @@ export default function Admin() {
   }
 
   const isBusy =
-    ordersQuery.isLoading ||
-    usersQuery.isLoading ||
-    productsQuery.isLoading ||
-    weeklySummaryQuery.isLoading ||
-    monthlySummaryQuery.isLoading ||
-    yearlySummaryQuery.isLoading;
+    (needsOrders && ordersQuery.isLoading) ||
+    (needsSummaries &&
+      ((analyticsPeriod === "weekly" && weeklySummaryQuery.isLoading) ||
+        monthlySummaryQuery.isLoading ||
+        (analyticsPeriod === "yearly" && yearlySummaryQuery.isLoading))) ||
+    (needsUsers && usersQuery.isLoading) ||
+    (needsProducts && productsQuery.isLoading) ||
+    categoriesQuery.isLoading;
 
-  return (
-    <div className="bg-[radial-gradient(circle_at_top_left,rgba(244,114,182,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(251,113,133,0.1),transparent_24%)] bg-background pb-10">
-      <div className="mx-auto grid w-full max-w-[1600px] items-start gap-6 px-4 py-8 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-6">
-        <aside className="rounded-[2rem] border border-border bg-card p-5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
-          <p className="text-xs uppercase tracking-[0.28em] text-pink-500">Admin Ops</p>
-          <h1 className="mt-3 text-3xl font-semibold text-foreground">Luku control room</h1>
-          <p className="mt-3 text-sm text-muted-foreground">
-            Welcome back, {user.name || user.email}. Run fulfillment, inventory, and reporting from one place.
-          </p>
+  const primaryError =
+    ordersQuery.error ||
+    weeklySummaryQuery.error ||
+    monthlySummaryQuery.error ||
+    yearlySummaryQuery.error ||
+    usersQuery.error ||
+    productsQuery.error ||
+    categoriesQuery.error;
 
-          <div className="mt-6 grid gap-3">
-            {ADMIN_SECTIONS.map((section) => (
-              <button
-                key={section.id}
-                type="button"
-                onClick={() => setActiveSection(section.id)}
-                className={`rounded-[1.5rem] border px-4 py-4 text-left transition-all ${
-                  activeSection === section.id
-                    ? "border-pink-400/60 bg-pink-500/10 shadow-sm"
-                    : "border-border bg-background/60 hover:border-pink-300/50 hover:bg-pink-500/[0.06]"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="rounded-2xl bg-secondary/70 p-2.5">
-                    <section.icon className="h-4 w-4 text-pink-500" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-foreground">{section.label}</p>
-                    <p className="text-xs text-muted-foreground">{section.description}</p>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
+  let sectionContent: React.ReactNode = null;
 
-          <div className="mt-6 rounded-[1.75rem] border border-border bg-background/70 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Live counts</p>
-            <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-              <MetricChip label="Current" value={currentOrders.length} />
-              <MetricChip label="Pending" value={pendingOrders.length} />
-              <MetricChip label="Urgent" value={urgentOrders.length} />
-              <MetricChip label="Low stock" value={lowStockProducts.length} />
-            </div>
-          </div>
-        </aside>
+  if (primaryError) {
+    sectionContent = (
+      <InlineErrorBox
+        title="Admin data could not load"
+        message={primaryError.message || "Please refresh the dashboard and try again."}
+      />
+    );
+  } else if (isBusy) {
+    sectionContent = <LoadingPanel title={`Loading ${currentSectionMeta.label.toLowerCase()}...`} />;
+  } else if (activeSection === "overview") {
+    sectionContent = (
+      <div className="space-y-4">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <SummaryCard
+            label="Revenue"
+            value={formatCurrency(activeSummary?.current?.totalRevenue)}
+            note={`${revenueDelta >= 0 ? "+" : ""}${revenueDelta.toFixed(1)}% vs previous`}
+            icon={DollarSign}
+          />
+          <SummaryCard
+            label="Orders"
+            value={String(activeSummary?.current?.totalOrders ?? orders.length)}
+            note={`${pendingOrders.length} pending right now`}
+            icon={ShoppingBag}
+          />
+          <SummaryCard
+            label="Customers"
+            value={String(allUsers.length)}
+            note={`${manualOrders.length} manual orders tracked`}
+            icon={Users}
+          />
+          <SummaryCard
+            label="Low Stock"
+            value={String(lowStockProducts.length)}
+            note={`${urgentOrders.length} urgent order${urgentOrders.length === 1 ? "" : "s"}`}
+            icon={AlertTriangle}
+          />
+        </div>
 
-        <main className="min-w-0 space-y-6">
-          <header className="rounded-[2rem] border border-border bg-card p-6">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div className="grid gap-4 xl:grid-cols-[1.45fr_0.85fr]">
+          <section className={cn(panelClass, "p-4 sm:p-5")}>
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.28em] text-pink-500">Operations Dashboard</p>
-                <h2 className="mt-3 text-3xl font-semibold text-foreground">
-                  {ADMIN_SECTIONS.find((section) => section.id === activeSection)?.label}
-                </h2>
-                <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-                  {getSectionIntro(activeSection)}
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                  Revenue trend
+                </h3>
+                <p className={cn("mt-1 text-sm", subtleTextClass)}>
+                  Fast view of how sales are moving this {analyticsPeriod.replace("ly", "")}.
                 </p>
               </div>
+              <span className="rounded-full border border-stone-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-700 dark:border-white/10 dark:bg-[#111315] dark:text-slate-200">
+                {analyticsPeriod}
+              </span>
+            </div>
+            <div className="mt-4 h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenueChartData} margin={{ top: 10, right: 12, left: -12, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="adminRevenueFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="rgba(196,138,86,0.28)" />
+                      <stop offset="95%" stopColor="rgba(196,138,86,0.02)" />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(148,163,184,0.16)" />
+                  <XAxis
+                    dataKey="label"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: "#64748b" }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: "#64748b" }}
+                    tickFormatter={(value) => formatCompactAmount(Number(value))}
+                  />
+                  <Tooltip
+                    formatter={(value) => formatCurrency(Number(value))}
+                    contentStyle={{
+                      borderRadius: 18,
+                      border: "1px solid rgba(148,163,184,0.18)",
+                      background: "rgba(15,23,42,0.96)",
+                      color: "#e2e8f0",
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#c48a56"
+                    strokeWidth={3}
+                    fill="url(#adminRevenueFill)"
+                    dot={false}
+                    activeDot={{ r: 5, fill: "#c48a56", stroke: "#fff", strokeWidth: 1.5 }}
+                    animationDuration={700}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </section>
+
+          <div className="space-y-4">
+            <section className={cn(panelClass, "p-4 sm:p-5")}>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Queue split</h3>
+              <div className="mt-4 space-y-3">
+                <ProgressRow label="Current orders" value={currentOrders.length} tone="bg-slate-950 dark:bg-[#f4efe7]" max={Math.max(orders.length, 1)} />
+                <ProgressRow label="Pending" value={pendingOrders.length} tone="bg-amber-500 dark:bg-amber-400" max={Math.max(orders.length, 1)} />
+                <ProgressRow label="Past orders" value={pastOrders.length} tone="bg-stone-400 dark:bg-stone-300" max={Math.max(orders.length, 1)} />
+                <ProgressRow label="Urgent" value={urgentOrders.length} tone="bg-rose-500 dark:bg-rose-400" max={Math.max(orders.length, 1)} />
+              </div>
+            </section>
+
+            <section className={cn(panelClass, "p-4 sm:p-5")}>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Needs attention</h3>
+              <div className="mt-4 space-y-3">
+                <InsightRow
+                  title="Pending approvals"
+                  detail="Fresh orders waiting for review."
+                  value={String(pendingOrders.length)}
+                />
+                <InsightRow
+                  title="Urgent follow-up"
+                  detail="Aged or unpaid orders needing action."
+                  value={String(urgentOrders.length)}
+                />
+                <InsightRow
+                  title="Low stock products"
+                  detail="Products at three units or fewer."
+                  value={String(lowStockProducts.length)}
+                />
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-2">
+          <section className={cn(panelClass, "p-4 sm:p-5")}>
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Pending queue</h3>
+                <p className={cn("mt-1 text-sm", subtleTextClass)}>
+                  The next orders you should clear.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveSection("pending")}
+                className="text-sm font-medium text-slate-700 transition-colors hover:text-slate-950 dark:text-slate-300 dark:hover:text-white"
+              >
+                Open section
+              </button>
+            </div>
+            <OrdersTable
+              orders={pendingOrders.slice(0, 5)}
+              emptyTitle="No pending orders"
+              emptyDescription="New orders will appear here for quick review."
+              onSelect={setSelectedOrder}
+            />
+          </section>
+
+          <section className={cn(panelClass, "p-4 sm:p-5")}>
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Recent activity</h3>
+              <p className={cn("mt-1 text-sm", subtleTextClass)}>
+                Latest orders and how recently they came in.
+              </p>
+            </div>
+            <RecentOrderList orders={orders.slice(0, 6)} />
+          </section>
+        </div>
+      </div>
+    );
+  } else if (activeSection === "current") {
+    sectionContent = (
+      <OrdersTable
+        orders={currentOrders}
+        emptyTitle="No active orders"
+        emptyDescription="Once new orders come in, the live queue will show up here."
+        onSelect={setSelectedOrder}
+      />
+    );
+  } else if (activeSection === "pending") {
+    sectionContent = (
+      <OrdersTable
+        orders={pendingOrders}
+        emptyTitle="No pending orders"
+        emptyDescription="All new orders are already cleared."
+        onSelect={setSelectedOrder}
+      />
+    );
+  } else if (activeSection === "past") {
+    sectionContent = (
+      <OrdersTable
+        orders={pastOrders}
+        emptyTitle="No archived orders"
+        emptyDescription="Completed and cancelled orders will collect here."
+        onSelect={setSelectedOrder}
+      />
+    );
+  } else if (activeSection === "surveillance") {
+    sectionContent = (
+      <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+        <section className={cn(panelClass, "p-4 sm:p-5")}>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Urgent orders</h3>
+            <p className={cn("mt-1 text-sm", subtleTextClass)}>
+              Orders that are aging out or still unpaid.
+            </p>
+          </div>
+          <OrdersTable
+            orders={urgentOrders}
+            emptyTitle="Nothing urgent"
+            emptyDescription="No orders are currently overdue or payment-blocked."
+            onSelect={setSelectedOrder}
+          />
+        </section>
+
+        <div className="space-y-4">
+          <section className={cn(panelClass, "p-4 sm:p-5")}>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Low stock</h3>
+            <div className="mt-4 space-y-3">
+              {lowStockProducts.slice(0, 8).map((product) => (
+                <div
+                  key={product.id}
+                  className="rounded-[1.15rem] border border-stone-200/80 bg-white/80 px-4 py-3 dark:border-white/8 dark:bg-[#111315]"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-slate-900 dark:text-slate-50">
+                        {product.name}
+                      </p>
+                      <p className={cn("mt-1 text-sm", subtleTextClass)}>
+                        {product.brand || "Unbranded"}
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-[#f7efe6] px-3 py-1 text-xs font-semibold text-[#8c6239] dark:bg-[#231c16] dark:text-[#e6c6a4]">
+                      {product.stockCount ?? 0} left
+                    </span>
+                  </div>
+                </div>
+              ))}
+              {lowStockProducts.length === 0 ? (
+                <EmptyMessage
+                  title="Stock looks healthy"
+                  description="No products are currently in the low stock range."
+                />
+              ) : null}
+            </div>
+          </section>
+
+          <section className={cn(panelClass, "p-4 sm:p-5")}>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Quick notes</h3>
+            <div className="mt-4 space-y-3">
+              <InsightRow
+                title="Manual orders"
+                detail="Sales captured outside the storefront."
+                value={String(manualOrders.length)}
+              />
+              <InsightRow
+                title="Delivered orders"
+                detail="Orders already completed."
+                value={String(activeSummary?.current?.deliveredOrders ?? 0)}
+              />
+              <InsightRow
+                title="Paid orders"
+                detail="Orders already confirmed with payment."
+                value={String(activeSummary?.current?.paidOrders ?? 0)}
+              />
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  } else if (activeSection === "manual") {
+    sectionContent = (
+      <ManualOrderForm
+        loading={createManualOrder.isPending}
+        onSubmit={async (payload) => {
+          await createManualOrder.mutateAsync(payload);
+        }}
+      />
+    );
+  } else if (activeSection === "inventory") {
+    sectionContent = (
+      <div className="space-y-6">
+        <InventoryManager
+          categories={categories}
+          products={allProducts}
+          loading={saveProduct.isPending}
+          deletingProductId={deleteProduct.variables?.productId ?? null}
+          onSubmit={async (payload) => {
+            await saveProduct.mutateAsync(payload);
+          }}
+          onDelete={async (productId) => {
+            await deleteProduct.mutateAsync({ productId });
+          }}
+        />
+        <CategoryManager
+          categories={visibleCategories}
+          loading={saveCategory.isPending}
+          onSubmit={async (payload) => {
+            await saveCategory.mutateAsync(payload);
+          }}
+        />
+      </div>
+    );
+  } else if (activeSection === "customers") {
+    sectionContent = (
+      <section className={cn(panelClass, "overflow-hidden")}>
+        <div className="flex items-center justify-between gap-4 border-b border-stone-200/80 px-4 py-4 dark:border-white/8 sm:px-5">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Customer accounts</h3>
+            <p className={cn("mt-1 text-sm", subtleTextClass)}>
+              Cleaner view of shoppers and admin operators.
+            </p>
+          </div>
+          <span className="rounded-full border border-stone-200 bg-white px-3 py-1 text-sm font-medium text-slate-700 dark:border-white/10 dark:bg-[#111315] dark:text-slate-200">
+            {allUsers.length} total
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] text-sm">
+            <thead>
+              <tr className="border-b border-stone-200/80 bg-stone-100/70 dark:border-white/8 dark:bg-[#15181c]">
+                {["Name", "Email", "Role", "Joined", "Last Seen"].map((heading) => (
+                  <th
+                    key={heading}
+                    className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400"
+                  >
+                    {heading}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {allUsers.map((account: any) => (
+                <tr key={account.id} className="border-b border-stone-200/70 dark:border-white/8">
+                  <td className="px-4 py-4 font-medium text-slate-900 dark:text-slate-50">
+                    {account.name || "No name"}
+                  </td>
+                  <td className={cn("px-4 py-4", subtleTextClass)}>{account.email || "No email"}</td>
+                  <td className="px-4 py-4">
+                    <span className="rounded-full bg-stone-200/80 px-3 py-1 text-xs font-semibold text-slate-800 dark:bg-white/10 dark:text-slate-100">
+                      {account.role === "admin" ? "Admin" : "Customer"}
+                    </span>
+                  </td>
+                  <td className={cn("px-4 py-4", subtleTextClass)}>
+                    {account.createdAt ? formatOrderDate(account.createdAt) : "Unknown"}
+                  </td>
+                  <td className={cn("px-4 py-4", subtleTextClass)}>
+                    {account.lastSignedIn ? formatOrderDate(account.lastSignedIn) : "Never"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    );
+  } else if (activeSection === "analytics") {
+    sectionContent = (
+      <div className="space-y-4">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <SummaryCard
+            label="Orders"
+            value={String(activeSummary?.current?.totalOrders ?? 0)}
+            note={`Previous ${activeSummary?.previous?.totalOrders ?? 0}`}
+            icon={Package}
+          />
+          <SummaryCard
+            label="Revenue"
+            value={formatCurrency(activeSummary?.current?.totalRevenue)}
+            note={`${revenueDelta >= 0 ? "+" : ""}${revenueDelta.toFixed(1)}% change`}
+            icon={DollarSign}
+          />
+          <SummaryCard
+            label="Paid"
+            value={String(activeSummary?.current?.paidOrders ?? 0)}
+            note={`Previous ${activeSummary?.previous?.paidOrders ?? 0}`}
+            icon={TrendingUp}
+          />
+          <SummaryCard
+            label="Delivered"
+            value={String(activeSummary?.current?.deliveredOrders ?? 0)}
+            note={`Previous ${activeSummary?.previous?.deliveredOrders ?? 0}`}
+            icon={Truck}
+          />
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-[1.35fr_0.85fr]">
+          <section className={cn(panelClass, "p-4 sm:p-5")}>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Revenue chart</h3>
+            <p className={cn("mt-1 text-sm", subtleTextClass)}>
+              Compact view of the active period.
+            </p>
+            <div className="mt-4 h-[320px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenueChartData} margin={{ top: 10, right: 12, left: -12, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="analyticsRevenueFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="rgba(196,138,86,0.28)" />
+                      <stop offset="95%" stopColor="rgba(196,138,86,0.02)" />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(148,163,184,0.16)" />
+                  <XAxis
+                    dataKey="label"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: "#64748b" }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: "#64748b" }}
+                    tickFormatter={(value) => formatCompactAmount(Number(value))}
+                  />
+                  <Tooltip
+                    formatter={(value) => formatCurrency(Number(value))}
+                    contentStyle={{
+                      borderRadius: 18,
+                      border: "1px solid rgba(148,163,184,0.18)",
+                      background: "rgba(15,23,42,0.96)",
+                      color: "#e2e8f0",
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#c48a56"
+                    strokeWidth={3}
+                    fill="url(#analyticsRevenueFill)"
+                    dot={false}
+                    activeDot={{ r: 5, fill: "#c48a56", stroke: "#fff", strokeWidth: 1.5 }}
+                    animationDuration={700}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </section>
+
+          <section className={cn(panelClass, "p-4 sm:p-5")}>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Latest wins</h3>
+            <div className="mt-4">
+              <RecentOrderList orders={orders.slice(0, 8)} />
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={pageClass}>
+      <div className="mx-auto max-w-[1680px] px-4 py-4 lg:px-6">
+        <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
+          <aside className={cn(shellClass, "flex flex-col gap-4 p-4 lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)]")}>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-stone-500 dark:text-slate-400">
+                Admin
+              </p>
+              <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-slate-50">
+                Boutique Console
+              </h1>
+              <p className={cn("mt-2 text-sm", subtleTextClass)}>
+                Minimal workspace for orders, stock, customers, and reporting.
+              </p>
+            </div>
+
+            <div className="grid gap-2">
+              <Button
+                type="button"
+                onClick={() => setActiveSection("inventory")}
+                className="justify-start rounded-[1rem] bg-slate-950 text-white hover:bg-slate-800 dark:bg-[#f4efe7] dark:text-slate-950 dark:hover:bg-[#ece4d9]"
+              >
+                <Boxes className="h-4 w-4" />
+                Open inventory
+              </Button>
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => {
-                  void Promise.all([
-                    ordersQuery.refetch(),
-                    usersQuery.refetch(),
-                    productsQuery.refetch(),
-                    weeklySummaryQuery.refetch(),
-                    monthlySummaryQuery.refetch(),
-                    yearlySummaryQuery.refetch(),
-                  ]);
-                }}
-                className="gap-2 self-start"
+                onClick={() => setActiveSection("manual")}
+                className="justify-start rounded-[1rem] border-stone-200 bg-white text-slate-700 hover:bg-stone-50 dark:border-white/10 dark:bg-[#171a1f] dark:text-slate-200 dark:hover:bg-[#1d2127]"
               >
-                <RefreshCw className="h-4 w-4" />
-                Refresh Data
+                <Truck className="h-4 w-4" />
+                Add manual order
               </Button>
             </div>
-          </header>
 
-          {activeSection === "overview" ? (
-            <div className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <StatCard
-                  label="Revenue This Month"
-                  value={formatCurrency(monthlySummaryQuery.data?.current?.totalRevenue)}
-                  note={`${Math.round(revenueDelta)}% vs previous period`}
-                  icon={DollarSign}
-                />
-                <StatCard
-                  label="Pending Orders"
-                  value={String(pendingOrders.length)}
-                  note="Delete or process fresh orders fast"
-                  icon={ClipboardList}
-                />
-                <StatCard
-                  label="Customer Accounts"
-                  value={String(allUsers.length)}
-                  note={`${manualOrders.length} manual-origin orders`}
-                  icon={Users}
-                />
-                <StatCard
-                  label="Inventory Count"
-                  value={String(allProducts.length)}
-                  note={`${lowStockProducts.length} low stock or paused`}
-                  icon={ShoppingBag}
-                />
-              </div>
+            <nav className="space-y-1 overflow-y-auto pr-1">
+              {ADMIN_SECTIONS.map((section) => {
+                const Icon = section.icon;
+                const isActive = activeSection === section.id;
 
-              <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-                <section className="rounded-[2rem] border border-border bg-card p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-xl font-semibold">Current fulfillment queue</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Focus the team on the newest active orders first.
+                return (
+                  <button
+                    key={section.id}
+                    type="button"
+                    onClick={() => setActiveSection(section.id)}
+                    className={cn(
+                      "flex w-full items-center gap-3 rounded-[1.1rem] px-3 py-3 text-left transition-colors",
+                      isActive
+                        ? "bg-slate-950 text-white dark:bg-[#f2ede5] dark:text-slate-950"
+                        : "text-slate-700 hover:bg-stone-100 dark:text-slate-200 dark:hover:bg-[#181b20]",
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "flex h-10 w-10 items-center justify-center rounded-2xl",
+                        isActive
+                          ? "bg-white/12 dark:bg-white/60"
+                          : "bg-white shadow-sm dark:bg-white/8",
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="truncate text-sm font-semibold">{section.label}</p>
+                        <span
+                          className={cn(
+                            "rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]",
+                            isActive
+                              ? "bg-white/12 text-white dark:bg-white/60 dark:text-slate-950"
+                              : "bg-stone-200/80 text-slate-700 dark:bg-white/8 dark:text-slate-200",
+                          )}
+                        >
+                          {sectionBadges[section.id]}
+                        </span>
+                      </div>
+                      <p
+                        className={cn(
+                          "mt-1 text-xs",
+                          isActive ? "text-white/75 dark:text-slate-700" : "text-slate-500 dark:text-slate-400",
+                        )}
+                      >
+                        {section.description}
                       </p>
                     </div>
-                    <Button type="button" variant="outline" onClick={() => setActiveSection("current")}>
-                      View all current
-                    </Button>
-                  </div>
-                  <div className="mt-6">
-                    <OrdersTable
-                      orders={currentOrders.slice(0, 6)}
-                      emptyTitle="No active orders right now"
-                      emptyDescription="New website and WhatsApp orders will appear here."
-                      onSelect={setSelectedOrder}
-                    />
-                  </div>
-                </section>
+                  </button>
+                );
+              })}
+            </nav>
 
-                <section className="rounded-[2rem] border border-border bg-card p-6">
-                  <h3 className="text-xl font-semibold">Operational watchlist</h3>
-                  <div className="mt-5 space-y-4">
-                    <WatchCard
-                      title="Pending orders"
-                      count={pendingOrders.length}
-                      detail="Fresh orders waiting for confirmation, processing, or deletion."
-                    />
-                    <WatchCard
-                      title="Urgent orders"
-                      count={urgentOrders.length}
-                      detail="Pending, unpaid, or aging orders that need operator follow-up."
-                    />
-                    <WatchCard
-                      title="WhatsApp / manual orders"
-                      count={manualOrders.length}
-                      detail="Orders booked outside the storefront that still affect revenue and stock."
-                    />
-                    <WatchCard
-                      title="Low stock products"
-                      count={lowStockProducts.length}
-                      detail="Products with 3 or fewer units left, or temporarily paused from sale."
-                    />
-                  </div>
-                </section>
-              </div>
-            </div>
-          ) : null}
-
-          {activeSection === "current" ? (
-            <section className="rounded-[2rem] border border-border bg-card p-6">
-              <OrdersTable
-                orders={currentOrders}
-                emptyTitle="No current orders"
-                emptyDescription="Once new customer orders arrive, they will queue here for admin handling."
-                onSelect={setSelectedOrder}
-              />
-            </section>
-          ) : null}
-
-          {activeSection === "pending" ? (
-            <div className="space-y-6">
-              <section className="rounded-[2rem] border border-border bg-card p-6">
-                <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                  <div>
-                    <h3 className="text-xl font-semibold">Pending order desk</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      Review fresh orders, move them forward, or delete only the ones that should not stay in the system.
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-pink-400/20 bg-pink-500/10 px-4 py-3 text-sm text-pink-700 dark:text-pink-200">
-                    {pendingOrders.length} pending order{pendingOrders.length === 1 ? "" : "s"} waiting
-                  </div>
+            <div className="mt-auto rounded-[1.25rem] border border-stone-200/80 bg-stone-50/85 p-4 dark:border-white/8 dark:bg-[#181b20]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-stone-500 dark:text-slate-400">
+                Signed in
+              </p>
+              <div className="mt-3 flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-sm font-semibold text-white dark:bg-[#f4efe7] dark:text-slate-950">
+                  {user.name?.charAt(0)?.toUpperCase() ?? "A"}
                 </div>
-                <div className="mt-6">
-                  <OrdersTable
-                    orders={pendingOrders}
-                    emptyTitle="No pending orders"
-                    emptyDescription="Fresh orders will appear here before they are confirmed or processed."
-                    onSelect={setSelectedOrder}
-                  />
-                </div>
-              </section>
-            </div>
-          ) : null}
-
-          {activeSection === "past" ? (
-            <section className="rounded-[2rem] border border-border bg-card p-6">
-              <OrdersTable
-                orders={pastOrders}
-                emptyTitle="No completed history yet"
-                emptyDescription="Delivered and cancelled orders will build your history panel."
-                onSelect={setSelectedOrder}
-              />
-            </section>
-          ) : null}
-
-          {activeSection === "surveillance" ? (
-            <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-              <section className="rounded-[2rem] border border-border bg-card p-6">
-                <h3 className="text-xl font-semibold">Urgent order radar</h3>
-                <div className="mt-5 space-y-4">
-                  {urgentOrders.length === 0 ? (
-                    <EmptyMessage
-                      title="No urgent orders right now"
-                      description="The queue is healthy. New high-priority issues will surface here."
-                    />
-                  ) : (
-                    urgentOrders.map((order) => (
-                      <div key={order.id} className="rounded-3xl border border-border bg-background/70 p-4">
-                        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                          <div>
-                            <p className="font-semibold text-foreground">{order.orderNumber}</p>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                              {order.customerName} · {order.source} · {formatRelativeAge(order.createdAt)}
-                            </p>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_COLORS[order.status] ?? "bg-secondary text-secondary-foreground"}`}>
-                              {order.status}
-                            </span>
-                            <span className="rounded-full bg-rose-500/15 px-3 py-1 text-xs font-semibold text-rose-700 dark:text-rose-200">
-                              {order.paymentStatus}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <p className="text-sm text-foreground">{formatCurrency(order.total)}</p>
-                          <Button type="button" variant="outline" onClick={() => setSelectedOrder(order)}>
-                            Review order
-                          </Button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </section>
-
-              <div className="space-y-6">
-                <section className="rounded-[2rem] border border-border bg-card p-6">
-                  <h3 className="text-xl font-semibold">Low stock watch</h3>
-                  <div className="mt-5 space-y-3">
-                    {lowStockProducts.length === 0 ? (
-                      <EmptyMessage
-                        title="No low stock products"
-                        description="Inventory levels are looking healthy."
-                      />
-                    ) : (
-                      lowStockProducts.slice(0, 8).map((product) => (
-                        <div key={product.id} className="flex items-center gap-3 rounded-3xl border border-border bg-background/70 p-3">
-                          <img
-                            src={product.imageUrl}
-                            alt={product.name}
-                            className="h-14 w-14 rounded-2xl object-cover"
-                          />
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate font-medium text-foreground">{product.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {product.stockCount ?? 0} left · {product.inStock ? "live" : "paused"}
-                            </p>
-                          </div>
-                          <Button type="button" variant="outline" onClick={() => setActiveSection("inventory")}>
-                            Open
-                          </Button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </section>
-
-                <section className="rounded-[2rem] border border-border bg-card p-6">
-                  <h3 className="text-xl font-semibold">Traffic split</h3>
-                  <div className="mt-5 h-[240px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={statusMixData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-                        <YAxis tick={{ fontSize: 12 }} />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="rgb(236 72 153)" radius={[8, 8, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </section>
-              </div>
-            </div>
-          ) : null}
-
-          {activeSection === "manual" ? (
-            <ManualOrderForm
-              loading={createManualOrder.isPending}
-              onSubmit={async (payload) => {
-                await createManualOrder.mutateAsync(payload);
-              }}
-            />
-          ) : null}
-
-          {activeSection === "inventory" ? (
-            <div className="space-y-6">
-              <InventoryManager
-                categories={categories}
-                products={allProducts}
-                loading={saveProduct.isPending}
-                deletingProductId={
-                  deleteProduct.isPending ? deleteProduct.variables?.productId ?? null : null
-                }
-                onSubmit={async (payload) => {
-                  await saveProduct.mutateAsync(payload);
-                }}
-                onDelete={async (productId) => {
-                  await deleteProduct.mutateAsync({ productId });
-                }}
-              />
-
-              <CategoryManager
-                categories={rawCategories as any}
-                loading={saveCategory.isPending}
-                onSubmit={async (payload) => {
-                  await saveCategory.mutateAsync(payload);
-                }}
-              />
-            </div>
-          ) : null}
-
-          {activeSection === "customers" ? (
-            <section className="rounded-[2rem] border border-border bg-card p-6">
-              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                <div>
-                  <h3 className="text-xl font-semibold">Customer accounts</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Every registered user in one clean list so you can track who is shopping and who has admin access.
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-slate-900 dark:text-slate-50">
+                    {user.name || "Admin"}
                   </p>
-                </div>
-                <div className="rounded-2xl border border-border bg-background/70 px-4 py-3 text-sm text-muted-foreground">
-                  {allUsers.length} total account{allUsers.length === 1 ? "" : "s"}
+                  <p className="truncate text-sm text-slate-500 dark:text-slate-400">{user.email}</p>
                 </div>
               </div>
+            </div>
+          </aside>
 
-              <div className="mt-6 overflow-x-auto rounded-3xl border border-border">
-                <table className="w-full min-w-[760px] text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-secondary/40">
-                      {["Name", "Email", "Role", "Joined", "Last Seen"].map((heading) => (
-                        <th
-                          key={heading}
-                          className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
+          <main className="min-w-0">
+            <section className={shellClass}>
+              <div className="flex flex-col gap-4 border-b border-stone-200/80 px-4 py-4 dark:border-white/8 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-500 dark:text-slate-400">
+                    Control Room
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold text-slate-950 dark:text-slate-50">
+                    {currentSectionMeta.label}
+                  </h2>
+                  <p className={cn("mt-2 text-sm", subtleTextClass)}>{getSectionIntro(activeSection)}</p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {(activeSection === "overview" || activeSection === "analytics") && (
+                    <div className="flex rounded-full border border-stone-200 bg-stone-50 p-1 dark:border-white/10 dark:bg-[#181b20]">
+                      {(["weekly", "monthly", "yearly"] as const).map((period) => (
+                        <button
+                          key={period}
+                          type="button"
+                          onClick={() => setAnalyticsPeriod(period)}
+                          className={cn(
+                            "rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] transition-colors",
+                            analyticsPeriod === period
+                              ? "bg-slate-950 text-white dark:bg-[#f4efe7] dark:text-slate-950"
+                              : "text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white",
+                          )}
                         >
-                          {heading}
-                        </th>
+                          {period}
+                        </button>
                       ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {allUsers.map((account: any) => (
-                      <tr key={account.id} className="border-b border-border/70">
-                        <td className="px-4 py-4 font-medium text-foreground">
-                          {account.name || "No name"}
-                        </td>
-                        <td className="px-4 py-4 text-muted-foreground">{account.email || "No email"}</td>
-                        <td className="px-4 py-4">
-                          <span className="rounded-full bg-pink-500/10 px-3 py-1 text-xs font-semibold text-pink-600 dark:text-pink-200">
-                            {account.role === "admin" ? "Admin" : "Customer"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4 text-muted-foreground">
-                          {account.createdAt ? formatOrderDate(account.createdAt) : "Unknown"}
-                        </td>
-                        <td className="px-4 py-4 text-muted-foreground">
-                          {account.lastSignedIn ? formatOrderDate(account.lastSignedIn) : "Never"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </div>
+                  )}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      void refetchAdminData();
+                    }}
+                    className="rounded-full border-stone-200 bg-white text-slate-700 hover:bg-stone-50 dark:border-white/10 dark:bg-[#171a1f] dark:text-slate-200 dark:hover:bg-[#1d2127]"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Refresh
+                  </Button>
+                </div>
               </div>
+
+              <div className="px-4 py-5 sm:px-5">{sectionContent}</div>
             </section>
-          ) : null}
-
-          {activeSection === "analytics" ? (
-            <div className="space-y-6">
-              <section className="rounded-[2rem] border border-border bg-card p-6">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.24em] text-pink-500">Revenue Intelligence</p>
-                    <h3 className="mt-3 text-2xl font-semibold">Weekly, monthly, and yearly trends</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      Track order flow and revenue changes across active trading windows.
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {(["weekly", "monthly", "yearly"] as const).map((period) => (
-                      <button
-                        key={period}
-                        type="button"
-                        onClick={() => setAnalyticsPeriod(period)}
-                        className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                          analyticsPeriod === period
-                            ? "bg-pink-500 text-white"
-                            : "border border-border bg-background text-foreground hover:border-pink-400 hover:text-pink-500"
-                        }`}
-                      >
-                        {period}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                  <StatCard
-                    label="Orders"
-                    value={String(activeSummary?.current?.totalOrders ?? 0)}
-                    note={`Prev ${activeSummary?.previous?.totalOrders ?? 0}`}
-                    icon={Package}
-                  />
-                  <StatCard
-                    label="Revenue"
-                    value={formatCurrency(activeSummary?.current?.totalRevenue)}
-                    note={`${revenueDelta >= 0 ? "+" : ""}${revenueDelta.toFixed(1)}%`}
-                    icon={DollarSign}
-                  />
-                  <StatCard
-                    label="Paid Orders"
-                    value={String(activeSummary?.current?.paidOrders ?? 0)}
-                    note={`Prev ${activeSummary?.previous?.paidOrders ?? 0}`}
-                    icon={TrendingUp}
-                  />
-                  <StatCard
-                    label="Delivered"
-                    value={String(activeSummary?.current?.deliveredOrders ?? 0)}
-                    note={`Prev ${activeSummary?.previous?.deliveredOrders ?? 0}`}
-                    icon={Truck}
-                  />
-                </div>
-              </section>
-
-              <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-                <section className="rounded-[2rem] border border-border bg-card p-6">
-                  <h3 className="text-xl font-semibold">Revenue chart</h3>
-                  <div className="mt-5 h-[320px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={revenueChartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-                        <YAxis tick={{ fontSize: 12 }} />
-                        <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                        <Bar dataKey="revenue" fill="rgb(244 114 182)" radius={[10, 10, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </section>
-
-                <section className="rounded-[2rem] border border-border bg-card p-6">
-                  <h3 className="text-xl font-semibold">Latest wins</h3>
-                  <div className="mt-5 space-y-4">
-                    {orders.slice(0, 5).map((order) => (
-                      <div key={order.id} className="rounded-3xl border border-border bg-background/70 p-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <p className="font-medium text-foreground">{order.customerName}</p>
-                            <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                              {formatOrderDate(order.createdAt)}
-                            </p>
-                          </div>
-                          <p className="font-semibold text-foreground">{formatCurrency(order.total)}</p>
-                        </div>
-                      </div>
-                    ))}
-                    {orders.length === 0 ? (
-                      <EmptyMessage
-                        title="No orders to chart yet"
-                        description="Once the first orders land, analytics will start filling in."
-                      />
-                    ) : null}
-                  </div>
-                </section>
-              </div>
-            </div>
-          ) : null}
-
-          {isBusy ? (
-            <div className="rounded-[2rem] border border-dashed border-border px-6 py-4 text-sm text-muted-foreground">
-              Loading live admin data...
-            </div>
-          ) : null}
-        </main>
+          </main>
+        </div>
       </div>
 
       {selectedOrder ? (
@@ -819,16 +967,7 @@ export default function Admin() {
   );
 }
 
-function MetricChip({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-2xl border border-border bg-card px-3 py-3">
-      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-      <p className="mt-1 text-lg font-semibold text-foreground">{value}</p>
-    </div>
-  );
-}
-
-function StatCard({
+function SummaryCard({
   label,
   value,
   note,
@@ -840,70 +979,167 @@ function StatCard({
   icon: typeof DollarSign;
 }) {
   return (
-    <div className="rounded-[2rem] border border-border bg-card p-5">
-      <div className="flex items-center justify-between">
-        <div className="rounded-2xl bg-pink-500/10 p-3 text-pink-500">
-          <Icon className="h-5 w-5" />
+    <div className={cn(panelClass, "p-4")}>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+          {label}
+        </p>
+        <div className="rounded-2xl bg-white p-2.5 text-slate-700 shadow-sm dark:bg-white/8 dark:text-slate-100">
+          <Icon className="h-4 w-4" />
         </div>
       </div>
-      <p className="mt-5 text-xs uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
-      <p className="mt-2 text-3xl font-semibold text-foreground">{value}</p>
-      <p className="mt-2 text-sm text-muted-foreground">{note}</p>
+      <p className={cn("mt-4 text-3xl font-semibold", metricTextClass)}>{value}</p>
+      <p className={cn("mt-2 text-sm", subtleTextClass)}>{note}</p>
     </div>
   );
 }
 
-function WatchCard({
-  title,
-  count,
-  detail,
+function ProgressRow({
+  label,
+  value,
+  max,
+  tone,
 }: {
-  title: string;
-  count: number;
-  detail: string;
+  label: string;
+  value: number;
+  max: number;
+  tone: string;
 }) {
+  const width = max > 0 ? Math.max((value / max) * 100, value > 0 ? 12 : 0) : 0;
+
   return (
-    <div className="rounded-3xl border border-border bg-background/70 p-5">
+    <div className="rounded-[1.15rem] border border-stone-200/80 bg-white/80 p-3.5 dark:border-white/8 dark:bg-[#111315]">
       <div className="flex items-center justify-between gap-4">
-        <p className="font-medium text-foreground">{title}</p>
-        <span className="rounded-full bg-pink-500/15 px-3 py-1 text-xs font-semibold text-pink-600 dark:text-pink-200">
-          {count}
+        <p className="text-sm font-medium text-slate-900 dark:text-slate-50">{label}</p>
+        <span className="rounded-full bg-stone-200/80 px-3 py-1 text-xs font-semibold text-slate-800 dark:bg-white/8 dark:text-slate-100">
+          {value}
         </span>
       </div>
-      <p className="mt-3 text-sm text-muted-foreground">{detail}</p>
+      <div className="mt-3 h-2 rounded-full bg-stone-200/75 dark:bg-white/8">
+        <div className={cn("h-full rounded-full transition-all duration-500", tone)} style={{ width: `${width}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function InsightRow({
+  title,
+  detail,
+  value,
+}: {
+  title: string;
+  detail: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-[1.15rem] border border-stone-200/80 bg-white/80 px-4 py-3 dark:border-white/8 dark:bg-[#111315]">
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="font-medium text-slate-900 dark:text-slate-50">{title}</p>
+          <p className={cn("mt-1 text-sm", subtleTextClass)}>{detail}</p>
+        </div>
+        <p className={cn("text-lg font-semibold", metricTextClass)}>{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function RecentOrderList({ orders }: { orders: AdminOrder[] }) {
+  if (orders.length === 0) {
+    return (
+      <EmptyMessage
+        title="No orders to show yet"
+        description="The recent activity list will fill in as orders arrive."
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {orders.map((order) => (
+        <div
+          key={order.id}
+          className="rounded-[1.15rem] border border-stone-200/80 bg-white/80 px-4 py-3 dark:border-white/8 dark:bg-[#111315]"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="truncate font-medium text-slate-900 dark:text-slate-50">
+                {order.customerName}
+              </p>
+              <p className={cn("mt-1 text-sm", subtleTextClass)}>
+                {order.orderNumber} • {formatRelativeAge(order.createdAt)}
+              </p>
+            </div>
+            <p className={cn("text-sm font-semibold", metricTextClass)}>{formatCurrency(order.total)}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function LoadingPanel({ title }: { title: string }) {
+  return (
+    <div className="rounded-[1.4rem] border border-dashed border-stone-300/80 px-6 py-14 text-center dark:border-white/10">
+      <p className="font-medium text-slate-900 dark:text-slate-50">{title}</p>
+      <p className={cn("mt-2 text-sm", subtleTextClass)}>One moment while the latest admin data arrives.</p>
+    </div>
+  );
+}
+
+function InlineErrorBox({ title, message }: { title: string; message: string }) {
+  return (
+    <div className="rounded-[1.4rem] border border-red-200 bg-red-50/80 px-5 py-4 dark:border-red-900/50 dark:bg-red-950/20">
+      <p className="font-semibold text-slate-900 dark:text-slate-50">{title}</p>
+      <p className={cn("mt-2 text-sm", subtleTextClass)}>{message}</p>
     </div>
   );
 }
 
 function EmptyMessage({ title, description }: { title: string; description: string }) {
   return (
-    <div className="rounded-3xl border border-dashed border-border px-6 py-12 text-center">
-      <p className="font-medium text-foreground">{title}</p>
-      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+    <div className="rounded-[1.4rem] border border-dashed border-stone-300/80 px-6 py-12 text-center dark:border-white/10">
+      <p className="font-medium text-slate-900 dark:text-slate-50">{title}</p>
+      <p className={cn("mt-2 text-sm", subtleTextClass)}>{description}</p>
     </div>
   );
+}
+
+function formatCompactAmount(value: number) {
+  if (!Number.isFinite(value)) {
+    return "0";
+  }
+
+  if (Math.abs(value) >= 1000) {
+    return new Intl.NumberFormat("en", {
+      notation: "compact",
+      maximumFractionDigits: 1,
+    }).format(value);
+  }
+
+  return value.toString();
 }
 
 function getSectionIntro(section: AdminSection) {
   switch (section) {
     case "overview":
-      return "Get a clean read on revenue, fulfillment pressure, customer accounts, and stock levels before you dive into actions.";
+      return "Key numbers, current queue pressure, and the next orders worth your attention.";
     case "current":
-      return "Handle live customer orders, payments, and delivery progress from the active fulfillment queue.";
+      return "Everything still moving through confirmation, payment, shipping, or delivery.";
     case "pending":
-      return "Review newly placed orders quickly, then either move them into fulfillment or remove the ones that should not remain.";
+      return "Fresh orders waiting for the first operator decision.";
     case "past":
-      return "Review completed and cancelled orders for service follow-up, reconciliation, and support history.";
+      return "Completed and cancelled orders kept in one clean archive.";
     case "surveillance":
-      return "Watch urgent orders, low-stock products, and manual-origin traffic that needs an operator eye.";
+      return "A tighter view of overdue orders, unpaid orders, and stock risks.";
     case "manual":
-      return "Book WhatsApp and walk-in orders on behalf of customers so every sale hits reporting and stock correctly.";
+      return "Capture WhatsApp and in-person sales without leaving the admin workspace.";
     case "inventory":
-      return "Add new inventory, refresh pricing, and keep low-stock items moving with a cleaner merchandise desk.";
+      return "Manage the storefront catalog and collections in one place.";
     case "customers":
-      return "See every registered customer and admin account in one place with the key dates that matter.";
+      return "Registered shoppers and admin roles in a simpler table.";
     case "analytics":
-      return "Track revenue and order performance with weekly, monthly, and yearly views built for admin decision-making.";
+      return "Revenue, order volume, and delivery progress by period.";
   }
 }
 

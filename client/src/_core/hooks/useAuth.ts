@@ -22,6 +22,7 @@ export function useAuth(options?: UseAuthOptions) {
   const logoutMutation = api.auth.logout.useMutation({
     onSuccess: () => {
       utils.auth.me.setData(undefined, null);
+      void utils.cart.get.invalidate();
     },
   });
 
@@ -35,7 +36,7 @@ export function useAuth(options?: UseAuthOptions) {
       throw error;
     } finally {
       utils.auth.me.setData(undefined, null);
-      await utils.auth.me.invalidate();
+      await Promise.all([utils.auth.me.invalidate(), utils.cart.get.invalidate()]);
     }
   }, [logoutMutation, utils]);
 

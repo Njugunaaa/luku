@@ -22,6 +22,8 @@ type HttpMethod = "GET" | "POST" | "PATCH" | "DELETE";
 const IS_DEV = process.env.NODE_ENV !== "production";
 const API_TIMEOUT_MS = IS_DEV ? 5 * 60_000 : 15_000;
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/+$/, "");
+const HTML_API_RESPONSE_MESSAGE =
+  "The API returned an HTML page instead of JSON. Restart the Next.js server, clear .next if needed, and confirm NEXT_PUBLIC_API_URL points to this app.";
 
 export class ApiError extends Error {
   constructor(
@@ -31,6 +33,11 @@ export class ApiError extends Error {
     super(message);
     this.name = "ApiError";
   }
+}
+
+function isHtmlResponse(payload: string) {
+  const normalized = payload.trim().toLowerCase();
+  return normalized.startsWith("<!doctype html") || normalized.startsWith("<html");
 }
 
 function buildPath(path: string, query?: Record<string, unknown>) {
@@ -84,7 +91,7 @@ async function request<TData>(
     const payload = isJson ? await response.json() : await response.text();
 
     if (!response.ok) {
-      const message =
+      let message =
         typeof payload === "object" &&
         payload !== null &&
         "message" in payload &&
@@ -94,7 +101,18 @@ async function request<TData>(
             ? payload
             : "Request failed";
 
+      if (typeof payload === "string" && isHtmlResponse(payload)) {
+        message = HTML_API_RESPONSE_MESSAGE;
+      }
+
       throw new ApiError(message, response.status);
+    }
+
+    if (typeof payload === "string" && isHtmlResponse(payload) && path.startsWith("/api/")) {
+      throw new ApiError(
+        HTML_API_RESPONSE_MESSAGE,
+        response.status || 500,
+      );
     }
 
     return payload as TData;
@@ -246,7 +264,11 @@ export const api = {
     signup: {
       useMutation: (
         options?: MutationOptions<
-          any,
+          {
+            success: true;
+            user: any;
+            delivery?: "email";
+          },
           { email: string; password: string; name?: string }
         >,
       ) =>
@@ -263,7 +285,12 @@ export const api = {
         }),
     },
     forgotPassword: {
-      useMutation: (options?: MutationOptions<{ success: true; resetUrl?: string }, { email: string }>) =>
+      useMutation: (
+        options?: MutationOptions<
+          { success: true; delivery?: "email" },
+          { email: string }
+        >,
+      ) =>
         useMutation({
           mutationFn: (input) => post("/api/auth/forgot-password", input),
           ...options,
@@ -271,10 +298,36 @@ export const api = {
     },
     resetPassword: {
       useMutation: (
-        options?: MutationOptions<{ success: true }, { token: string; password: string }>,
+        options?: MutationOptions<
+          { success: true; user?: any },
+          {
+            accessToken?: string;
+            tokenHash?: string;
+            type?: string;
+            code?: string;
+            password: string;
+          }
+        >,
       ) =>
         useMutation({
           mutationFn: (input) => post("/api/auth/reset-password", input),
+          ...options,
+        }),
+    },
+    verifyEmail: {
+      useMutation: (
+        options?: MutationOptions<
+          { success: true; user?: any },
+          {
+            accessToken?: string;
+            tokenHash?: string;
+            type?: string;
+            code?: string;
+          }
+        >,
+      ) =>
+        useMutation({
+          mutationFn: (input) => post("/api/auth/verify-email", input),
           ...options,
         }),
     },

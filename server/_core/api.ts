@@ -99,7 +99,7 @@ export function requireAdmin(req: ApiRequest) {
 
 export function toPublicUser(user: User | null) {
   if (!user) return null;
-  const { passwordHash: _passwordHash, ...safeUser } = user;
+  const { passwordHash: _passwordHash, loginMethod: _loginMethod, ...safeUser } = user;
   return safeUser;
 }
 
@@ -147,4 +147,3 @@ export function parseIdParam(value: unknown, label: string) {
 
   return parsed;
 }
-
