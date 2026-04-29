@@ -17,6 +17,11 @@ export const metadata: Metadata = {
   title: "Alivella Boutique - Youth Thrift Store",
   description:
     "Alivella Boutique - Premium Youth Thrift Store. Curated fashion for men and women. Shop designer pieces, streetwear, official wear, shoes, and accessories.",
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export const viewport: Viewport = {
